@@ -1,10 +1,23 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import {Alert, Button, Image, StyleSheet, Text, View, TouchableHighlight, TouchableWithoutFeedback} from 'react-native';
 
 export default function App() {
+
+
+  const handleTextPress = () => console.log('Text pressed')
+  const handleButtonPress = () => Alert.alert("SomeApp","It is message IDK",[
+      {text: "WOW!", onPress: () => console.log("Yoohoo")},
+      {text: "Bye!", onPress: () => console.log("GoodBye!!")}])
+
+
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
+      <Text>Citadel Of Blood</Text>
+      <Button title={"Press me"} style="auto" color="purple" onPress={handleButtonPress}/>
+
+      <TouchableWithoutFeedback onPress={handleButtonPress} title={"OK"}>
+        <Image source={require('./assets/favicon.png')}/>
+      </TouchableWithoutFeedback>
       <StatusBar style="auto" />
     </View>
   );
