@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "spell_name": "Enchantment",
+    "cost": 3,
+    "type": "B"
+  },
+  {
+    "id": 2,
+    "spell_name": "Wave",
+    "cost": 1,
+    "type": "B"
+  },
+  {
+    "id": 3,
+    "spell_name": "Explosion",
+    "cost": 1,
+    "type": "B"
+  },
+  {
+    "id": 4,
+    "spell_name": "Thunderbolt",
+    "cost": 2,
+    "type": "B"
+  },
+  {
+    "id": 5,
+    "spell_name": "Dream",
+    "cost": 2,
+    "type": "B"
+  },
+  {
+    "id": 6,
+    "spell_name": "Redemption",
+    "cost": 3,
+    "type": "B"
+  },
+  {
+    "id": 7,
+    "spell_name": "Magic Shield",
+    "cost": 2,
+    "type": "B"
+  }
+]

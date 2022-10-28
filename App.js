@@ -1,25 +1,39 @@
 import { StatusBar } from 'expo-status-bar';
-import {Alert, Button, Image, StyleSheet, Text, View, TouchableHighlight, TouchableWithoutFeedback} from 'react-native';
+import React, {useState} from "react";
+import {StyleSheet, View,} from 'react-native';
+import {NavigationContainer} from "@react-navigation/native";
+import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 
-export default function App() {
+import Header from "./Components/Header"
+import AboutScreen from "./Components/AboutScreen"
+import HomeScreen from "./Components/HomeScreen"
+import Settings from "./Components/Settings"
+import Rules from "./Components/Rules"
 
+const Tab = createBottomTabNavigator();
 
-  const handleTextPress = () => console.log('Text pressed')
-  const handleButtonPress = () => Alert.alert("SomeApp","It is message IDK",[
-      {text: "WOW!", onPress: () => console.log("Yoohoo")},
-      {text: "Bye!", onPress: () => console.log("GoodBye!!")}])
-
+function MyTabs() {
 
   return (
-    <View style={styles.container}>
-      <Text>Citadel Of Blood</Text>
-      <Button title={"Press me"} style="auto" color="purple" onPress={handleButtonPress}/>
+        <Tab.Navigator>
+          <Tab.Screen name={"Home"} component={HomeScreen}/>
+          <Tab.Screen name={"About"} component={AboutScreen}/>
+          <Tab.Screen name={"Settings"} component={Settings}/>
+          <Tab.Screen name={"Rules"} component={Rules}/>
+        </Tab.Navigator>
+  );
+}
 
-      <TouchableWithoutFeedback onPress={handleButtonPress} title={"OK"}>
-        <Image source={require('./assets/favicon.png')}/>
-      </TouchableWithoutFeedback>
-      <StatusBar style="auto" />
-    </View>
+export default function App() {
+  return (
+      <View style={styles.container}>
+        <Header/>
+          <View style={styles.tabs}>
+              <NavigationContainer>
+                  <MyTabs />
+              </NavigationContainer>
+          </View>
+      </View>
   );
 }
 
@@ -27,7 +41,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
+  tabs: {
+      flex: 1,
+      alignContent:"flex-start"
+  }
 });
