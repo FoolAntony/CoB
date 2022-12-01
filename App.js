@@ -9,6 +9,8 @@ import AboutScreen from "./Components/AboutScreen"
 import HomeScreen from "./Components/HomeScreen"
 import Settings from "./Components/Settings"
 import Rules from "./Components/Rules"
+import Viewport from "./Components/Viewport"
+import Test from "./Components/Test"
 
 const Tab = createBottomTabNavigator();
 
@@ -20,6 +22,7 @@ function MyTabs() {
           <Tab.Screen name={"About"} component={AboutScreen}/>
           <Tab.Screen name={"Settings"} component={Settings}/>
           <Tab.Screen name={"Rules"} component={Rules}/>
+          <Tab.Screen name={"Drag&Drop"} component={Test}/>
         </Tab.Navigator>
   );
 }

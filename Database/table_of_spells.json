@@ -1,44 +1,158 @@
 [
   {
     "id": 1,
-    "spell_name": "Enchantment",
+    "spell_name": "Charm",
     "cost": 3,
-    "type": "B"
+    "type": "C"
   },
   {
     "id": 2,
     "spell_name": "Wave",
     "cost": 1,
-    "type": "B"
+    "type": "C"
   },
   {
     "id": 3,
     "spell_name": "Explosion",
     "cost": 1,
-    "type": "B"
+    "type": "C"
   },
   {
     "id": 4,
-    "spell_name": "Thunderbolt",
+    "spell_name": "Lightning",
     "cost": 2,
-    "type": "B"
+    "type": "C"
   },
   {
     "id": 5,
-    "spell_name": "Dream",
+    "spell_name": "Sleep",
     "cost": 2,
-    "type": "B"
+    "type": "C"
   },
   {
     "id": 6,
     "spell_name": "Redemption",
     "cost": 3,
-    "type": "B"
+    "type": "C"
   },
   {
     "id": 7,
     "spell_name": "Magic Shield",
     "cost": 2,
-    "type": "B"
+    "type": "C"
+  },
+  {
+    "id": 8,
+    "spell_name": "Hesitate",
+    "cost": 2,
+    "type": "C"
+  },
+  {
+    "id": 9,
+    "spell_name": "Cease Fire",
+    "cost": 3,
+    "type": "C"
+  },
+  {
+    "id": 10,
+    "spell_name": "Mental Attach",
+    "cost": 4,
+    "type": "C"
+  },
+  {
+    "id": 11,
+    "spell_name": "Lock",
+    "cost": 1,
+    "type": "NC"
+  },
+  {
+    "id": 12,
+    "spell_name": "Mage Armor",
+    "cost": 2,
+    "type": "NC"
+  },
+  {
+    "id": 13,
+    "spell_name": "Neutralize Poison",
+    "cost": 1,
+    "type": "NC"
+  },
+  {
+    "id": 14,
+    "spell_name": "Stone-Flash",
+    "cost": 3,
+    "type": "NC"
+  },
+  {
+    "id": 15,
+    "spell_name": "Strength",
+    "cost": 1,
+    "type": "NC"
+  },
+  {
+    "id": 16,
+    "spell_name": "Teleport",
+    "cost": 1,
+    "type": "NC"
+  },
+  {
+    "id": 17,
+    "spell_name": "Heal",
+    "cost": 2,
+    "type": "NC"
+  },
+  {
+    "id": 18,
+    "spell_name": "Rejuvenate",
+    "cost": 2,
+    "type": "NC"
+  },
+  {
+    "id": 19,
+    "spell_name": "Thief",
+    "cost": 1,
+    "type": "NC"
+  },
+  {
+    "id": 20,
+    "spell_name": "Oratory",
+    "cost": 1,
+    "type": "N"
+  },
+  {
+    "id": 21,
+    "spell_name": "Cow",
+    "cost": 2,
+    "type": "N"
+  },
+  {
+    "id": 22,
+    "spell_name": "Daunt",
+    "cost": 2,
+    "type": "C"
+  },
+  {
+    "id": 23,
+    "spell_name": "Hesitate",
+    "cost": 2,
+    "type": "C"
+  },
+  {
+    "id": 24,
+    "spell_name": "Hesitate",
+    "cost": 2,
+    "type": "C"
+  },
+  {
+    "id": 25,
+    "spell_name": "Wrath of God",
+    "cost": 3,
+    "type": "S(C)"
+  },
+  {
+    "id": 26,
+    "spell_name": "Resurrect",
+    "cost": 5,
+    "type": "S(C)"
   }
 ]

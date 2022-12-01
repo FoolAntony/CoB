@@ -6,26 +6,44 @@ import {FlatList, Image, StyleSheet, Text, TouchableHighlight, View,} from 'reac
 export default function Rules() {
 
     const spells = require('../Database/table_of_spells.json')
+    const characters = require('../Database/heroes.json')
+    const monsters = require('../Database/monsters.json')
 
-    const Item = ({id, spell_name, cost, type}) => (
-        <View stype={{padding:50}}>
+    const Spell = ({id, spell_name, cost, type}) => (
+        <View>
             <Text>#{id} {spell_name} {cost} {type}</Text>
         </View>
     );
+    const Hero = ({id, Name, Race}) => (
+        <View>
+            <Text>#{id} {Name} {Race}</Text>
+        </View>
+    );
+    const Monster = ({id, Name}) => (
+        <View>
+            <Text>#{id} {Name}</Text>
+        </View>
+    )
 
-    const renderItem = ({ item }) => (
-      <Item id = {item.id} spell_name={item.spell_name} cost={item.cost} type={item.type}/>
+    const renderSpell = ({ item }) => (
+      <Spell id = {item.id} spell_name={item.spell_name} cost={item.cost} type={item.type}/>
+    );
+    const renderHero = ({ item }) => (
+        <Hero id = {item.id} Name = {item.Name} Race={item.Race}/>
+    );
+    const renderMonster = ({ item }) => (
+      <Monster id={item.id} Name={item.Name} />
     );
 
   return (
     <View style={styles.container}>
-        <Text>Check Rules!</Text>
-        <Text style={{paddingTop:10}}>Table Of Spells:</Text>
+        <Text style={{paddingTop:50}}>Check Rules!</Text>
         <View style={{paddingTop:30}}>
-            <FlatList data={spells}
+            <FlatList data={characters}
                       keyExtractor={(item) => item.id}
-                      renderItem={renderItem}/>
+                      renderItem={renderHero}/>
         </View>
+
     </View>
   );
 }

@@ -1,0 +1,202 @@
+[
+  {
+    "id": 1,
+    "Name": "Chimera",
+    "RV": 2,
+    "NV": 7,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure":["I"],
+    "Special": "Firebreath"
+  },
+  {
+    "id": 2,
+    "Name": "Cronk",
+    "RV": 1,
+    "NV": 9,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["E","B"],
+    "Special": "Stench"
+  },
+  {
+    "id": 3,
+    "Name": "Demon",
+    "RV": 4,
+    "NV": [],
+    "Weapon": "",
+    "Spells": "",
+    "Treasure": ["D"],
+    "Special": ""
+  },
+  {
+    "id": 4,
+    "Name": "Dire Wolf",
+    "RV": 1,
+    "NV": 9,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["A"],
+    "Special": []
+  },
+  {
+    "id": 5,
+    "Name": "Evil Hero",
+    "RV": 2,
+    "NV": 5,
+    "Weapon": "Sword",
+    "Spells": [],
+    "Treasure": ["J","C"],
+    "Special": []
+  },
+  {
+    "id": 6,
+    "Name": "Evil Mage",
+    "RV": 3,
+    "NV": 3,
+    "Weapon": "Dagger",
+    "Spells": "Lightning",
+    "Treasure": ["J","C"],
+    "Special": []
+  },
+  {
+    "id": 7,
+    "Name": "Gargoyle",
+    "RV": 3,
+    "NV": 4,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["G"],
+    "Special": []
+  },
+  {
+    "id": 8,
+    "Name": "Harpy",
+    "RV": 1,
+    "NV": 5,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["A"],
+    "Special": []
+  },
+  {
+    "id": 9,
+    "Name": "Hydra",
+    "RV": 3,
+    "NV": 7,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["J"],
+    "Special": []
+  },
+  {
+    "id": 10,
+    "Name": "Medusa",
+    "RV": 2,
+    "NV": 5,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["G"],
+    "Special": ["Flesh", "Stone"]
+  },
+  {
+    "id": 11,
+    "Name": "Minotaur",
+    "RV": 3,
+    "NV": 7,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["J", "C"],
+    "Special": []
+  },
+  {
+    "id": 12,
+    "Name": "Ogre",
+    "RV": 2,
+    "NV": 2,
+    "Weapon": "Hammer",
+    "Spells": [],
+    "Treasure": ["J", "E"],
+    "Special": []
+  },
+  {
+    "id": 13,
+    "Name": "Orc",
+    "RV": 1,
+    "NV": 0,
+    "Weapon": "Sword",
+    "Spells": [],
+    "Treasure": ["H", "B"],
+    "Special": []
+  },
+  {
+    "id": 14,
+    "Name": "Skeleton",
+    "RV": 1,
+    "NV": 9,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["F","A"],
+    "Special": []
+  },
+  {
+    "id": 15,
+    "Name": "Troll",
+    "RV": 3,
+    "NV": 4,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["J"],
+    "Special": "Regenerate"
+  },
+  {
+    "id": 16,
+    "Name": "Vampire",
+    "RV": 4,
+    "NV": 6,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["J"],
+    "Special": "Charm"
+  },
+  {
+    "id": 17,
+    "Name": "Warg",
+    "RV": 1,
+    "NV": 6,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["A"],
+    "Special": []
+  },
+  {
+    "id": 18,
+    "Name": "Wight",
+    "RV": 2,
+    "NV": 4,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["H"],
+    "Special": []
+  },
+  {
+    "id": 19,
+    "Name": "Wraith",
+    "RV": 1,
+    "NV": 2,
+    "Weapon": [],
+    "Spells": [],
+    "Treasure": ["I", "D"],
+    "Special": []
+  },
+  {
+    "id": 20,
+    "Name": "X the Unknown",
+    "RV": 4,
+    "NV": [],
+    "Weapon": "Sword",
+    "Spells": "Lightning",
+    "Treasure": ["L"],
+    "Special": []
+  }
+]

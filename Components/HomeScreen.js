@@ -22,6 +22,8 @@ export default function HomeScreen() {
           setIsModalVisible(!isModalVisible);
       };
 
+  const testIdImage = () => console.log('Chosen tile:', chosenTile)
+
 
   const handleButtonPress = (id) => Alert.alert("Button has been pressed", "You just have pressed the button. Continue?",[
       {text: "Yes, please!", onPress: () => {
@@ -32,7 +34,7 @@ export default function HomeScreen() {
       {text: "Hell no!"}
       ])
 
-  const testIdImage = () => console.log('Chosen tile:', chosenTile)
+
 
   const [listOfItems, setListOfItems] = useState([
       {image: require('../assets/favicon.png'), id: 1},
