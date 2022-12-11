@@ -1,14 +1,26 @@
 import { StatusBar } from 'expo-status-bar';
-import React, {useState} from "react";
-import {StyleSheet, Text, View,} from 'react-native';
+import React, {useEffect, useState} from "react";
+import {Button, StyleSheet, Text, View,} from 'react-native';
 
 
 
 export default function Settings() {
 
+  const [withTools, setWithTools] = useState(false)
+
+  const changeSetting = () => {
+    setWithTools(!withTools)
+  }
+
+  useEffect(() => console.log(withTools), [withTools])
+
   return (
     <View style={styles.container}>
       <Text>Change Settings!</Text>
+      <View>
+        <Button title={'Help!'} onPress={changeSetting}/>
+        <Text>Current state {JSON.stringify(withTools)}</Text>
+      </View>
     </View>
   );
 }

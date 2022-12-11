@@ -1,0 +1,35 @@
+[
+  {
+    "id": 24,
+    "Name": null,
+    "Race": "Elf",
+    "WP": 5,
+    "MP": null ,
+    "RV": 2,
+    "Weapon": ["Bow"],
+    "WS": ["Bow", 1],
+    "Skill": ["Negotiation", 1]
+  },
+  {
+    "id": 25,
+    "Name": null,
+    "Race": "Dwarf",
+    "WP": 6,
+    "MP": null ,
+    "RV": 2,
+    "Weapon": ["Axe"],
+    "WS": ["Axe", 1],
+    "Skill": ["Detrap", 1]
+  },
+  {
+    "id": 26,
+    "Name": null,
+    "Race": "Human",
+    "WP": 7,
+    "MP": null,
+    "RV": 1,
+    "Weapon": ["Sword"],
+    "WS": ["Sword", 1],
+    "Skill": ["Hellgate", 1]
+  }
+]

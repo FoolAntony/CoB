@@ -1,4 +1,4 @@
-import {monsterDataset} from "./GameController";
+import {halfDiceRoll, monsterDataset} from "./GameController";
 
 interface CharacterInfo {
     "id": number;
@@ -26,12 +26,38 @@ interface MonsterInfo {
 
 const CharactersList = require("../Database/heroes.json")
 
-let Team = []
+export function idRandomHero(save) {
+    let min = Math.ceil(1)
+    let max = Math.floor(23)
+    let res = Math.floor(Math.random() * (max - min + 1)) + min;
+    return res;
+}
+
+export const randomHero = (id => CharactersList.find(m => {
+    return m.id === id;
+}))
+
+export const Team = Array(6).fill({})
 let TeamBattlePos = Array(3).fill(Array(3).fill({}))
 let EnemiesBattlePos = Array(3).fill(Array(3).fill({}))
 
 export function addTeamMember(item) {
     return Team.push(item)
+}
+
+export function chooseFollowerRace(dice) {
+   let res = halfDiceRoll(dice)
+    switch (res) {
+        case 1:
+            return "Elf"
+            break;
+        case 2:
+            return "Dwarf";
+            break;
+        case 3:
+            return "Human";
+            break;
+    }
 }
 
 export function setTeamSquadPos(item, x, y){

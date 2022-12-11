@@ -6,12 +6,14 @@ interface SpellInfo{
   "type": string
 }
 
-export const boardMap = Array(50).fill(Array(50).fill({}))
-boardMap[25][25] = {type: "Start"}
+
+let board = Array(50).fill(Array(50).fill({}))
+board[25][25] = {type: "Start"}
+
 
 export const monsterDataset = require('../Database/monsters.json')
 
-let monst = (name => monsterDataset.find(m => {
+const monst = (name => monsterDataset.find(m => {
   return m.Name === name;
 }))
 
@@ -66,6 +68,15 @@ export const briberyTable = [
     [6, 6, 6, 5, 5, 4]
 ]
 
+export const magicItemsTable = [
+    ["Sword", "Hammer", "Axe", "Bow", "Dagger", "T-Dagger"],
+    [1,1,1,2,2,"Throw twice"],
+    ["Poison", "Power", "Power", "Charm Person", "Charm Monster", "Heal"],
+    ["Wise", "Yellow Sun", "Blue Sun", "Red Sun", "All Suns", "Evil"],
+    ["Neutralize Poison", "Potion Check", "Oratory", "Neutralize Poison", "Asphyxiation"],
+    ["Resistance +1", "Resistance +2", "Dream", "Neutralize Poison", "Heal", "Resurrection"],
+]
+
 export function rollDice() {
   return 1 + Math.floor(Math.random() * 6);
 }
@@ -76,10 +87,10 @@ export function rollTwoDices() {
   return a + b;
 }
 
-function halfDiceRoll(dice){
+export function halfDiceRoll(dice){
   let q = Math.floor(dice/2);
   let rem = dice % 2;
-  if (rem == 1){
+  if (rem === 1){
     q += 1
   }
   return q
@@ -117,69 +128,34 @@ export function negotiation(dice, hero, monster, spell){
 export function monsterType(d1, d2, dice){
   let i = d1 - 1;
   let j = d2 - 1;
-  let dices = [d1,d2];
-  let amount = 1;
-  switch (dices){
-    case([4,1]):
-    case([4,2]):
-    case([5,2]):
-    case([5,5]):
-      amount = 2;
-      break;
-    case([1,3]):
-    case([3,1]):
-    case([5,4]):
-    case([5,6]):
-    case([6,3]):
-      amount = dice;
-      break;
-    case([2,1]):
-    case([6,1]):
-    case([6,2]):
-      amount = halfDiceRoll(dice);
-      break;
-    case([2,4]):
-    case([6,4]):
-      amount = halfDiceRoll(dice) + 2;
-      break;
-    case([3,6]):
-    case([4,4]):
-      amount = dice + 1;
-      break;
-    default:
-      break;
+  let a = 1;
+  if ((d1 === 4 && d2 === 1) || (d1 === 4 && d2 === 2) || (d1 === 5 && d2 === 2) || (d1 === 5 && d2 === 5)) {
+    a = 2;
+  } else if ((d1 === 1 && d2 === 3) || (d1 === 3 && d2 === 1) || (d1 === 5 && d2 === 4) || (d1 === 5 && d2 === 6) || (d1 === 6 && d2 === 4)) {
+    a = dice;
+  } else if ((d1 === 2 && d2 === 1) || (d1 === 6 && d2 === 1) || (d1 === 6 && d2 === 2)) {
+    a = halfDiceRoll(dice);
+  } else if ((d1 === 2 && d2 === 4) || (d1 === 6 && d2 === 4)) {
+    a = halfDiceRoll(dice) + 2;
+  } else if ((d1 === 3 && d2 === 6) || (d1 === 4 && d2 === 4)) {
+    a = dice + 1;
   }
-  return {monster: monsterTable[i][j], amount: amount};
+  return {monster: monsterTable[i][j], amount: a};
 }
 
 export function monsterWanderingType(d1,d2,dice){
-  let amount = 1;
+  let a = 1;
   let i = d1 - 1;
   let j = halfDiceRoll(d2) - 1;
-  let dices = [d1,d2]
-  switch (dices){
-    case [2,5]:
-    case [2,6]:
-    case [5,3]:
-    case [5,4]:
-    case [5,5]:
-    case [5,6]:
-      amount = halfDiceRoll(dice);
-      break;
-    case [3,5]:
-    case [3,6]:
-      amount = halfDiceRoll(dice) + 2
-      break;
-    case [4,5]:
-    case [4,6]:
-    case [6,5]:
-    case [6,6]:
-      amount = dice;
-      break;
-    default:
-      break;
+  if ((d1 === 2 && d2 === 5) || (d1 === 2 && d2 === 6) || (d1 === 5 && d2 === 3) || (d1 === 5 && d2 === 4) || (d1 === 5 && d2 === 5) || (d1 === 5 && d2 === 6)) {
+    a = halfDiceRoll(dice);
+  } else if ((d1 === 3 && d2 === 5) || (d1 === 3 && d2 === 6)) {
+    a = halfDiceRoll(dice) + 2;
+  } else if ((d1 === 4 && d2 === 5) || (d1 === 4 && d2 === 6) || (d1 === 6 && d2 === 5) || (d1 === 6 && d2 === 6)) {
+    a = dice;
   }
-  return {monster:monsterWanderingTable[i][j], amount: amount};
+
+  return {monster:monsterWanderingTable[i][j], amount: a};
 }
 
 export function battleResultNum(res){
@@ -276,6 +252,7 @@ export function briberyWP_N(sum) {
     index = 4
   if (sum >= 21)
     index = 5
+  return index
 }
 
 export function briberyGold(value) {
@@ -313,6 +290,12 @@ export function briberyGold(value) {
   return index
 }
 
+export function briberyResult(wp, gold){
+  let i = briberyWP_N(wp)
+  let j = briberyGold(gold)
+  return briberyTable[j][i]
+}
+
 export function weaponBonus(d) {
   let bonus = 0;
   switch (d) {
@@ -333,8 +316,15 @@ export function weaponBonus(d) {
   return bonus;
 }
 
+let jew_table = [1, 5, 10, 15, 20, 25, 35, 50, 75, 100, 150];
+
 export function jewelryTable(dice) {
-  let table = [1, 5, 10, 15, 20, 25, 35, 50, 75, 100, 150];
   let i = dice - 2;
-  return table[i];
+  return jew_table[i];
+}
+
+export function getMagicItem(d1, d2) {
+  let i = d1 - 1
+  let j = d2 - 1
+  return magicItemsTable[i][j]
 }

@@ -2,7 +2,6 @@ import { StatusBar } from 'expo-status-bar';
 import React, {useState} from "react";
 import {StyleSheet, View,} from 'react-native';
 import {NavigationContainer} from "@react-navigation/native";
-import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 
 import Header from "./Components/Header"
 import AboutScreen from "./Components/AboutScreen"
@@ -11,32 +10,33 @@ import Settings from "./Components/Settings"
 import Rules from "./Components/Rules"
 import Viewport from "./Components/Viewport"
 import Test from "./Components/Test"
+import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
+import Board from "./Components/GameplayComponents/Board";
+import Squad from "./Components/GameplayComponents/Squad";
+import Battlefield from "./Components/GameplayComponents/Battlefield";
 
-const Tab = createBottomTabNavigator();
 
-function MyTabs() {
+const GameTab = createBottomTabNavigator();
 
+
+function GameTabs() {
   return (
-        <Tab.Navigator>
-          <Tab.Screen name={"Home"} component={HomeScreen}/>
-          <Tab.Screen name={"About"} component={AboutScreen}/>
-          <Tab.Screen name={"Settings"} component={Settings}/>
-          <Tab.Screen name={"Rules"} component={Rules}/>
-          <Tab.Screen name={"Drag&Drop"} component={Test}/>
-        </Tab.Navigator>
+        <GameTab.Navigator>
+          <GameTab.Screen name={"Board"} component={Board}/>
+          <GameTab.Screen name={"Squad"} component={Squad}/>
+          <GameTab.Screen name={"Battle"} component={Battlefield}/>
+        </GameTab.Navigator>
   );
 }
+
 
 export default function App() {
   return (
       <View style={styles.container}>
-        <Header/>
-          <View style={styles.tabs}>
-              <NavigationContainer>
-                  <MyTabs />
-              </NavigationContainer>
-          </View>
+          <Header/>
+            <Squad/>
       </View>
+
   );
 }
 
@@ -45,8 +45,4 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  tabs: {
-      flex: 1,
-      alignContent:"flex-start"
-  }
 });
