@@ -96,18 +96,18 @@ export function halfDiceRoll(dice){
   return q
 }
 
-export function magicPotential(dice, hero){
+export function magicPotential(dice){
   switch (dice){
     case 3:
-      return hero.MP = [2,1,0]
+      return [2,1,0]
     case 4:
-      return hero.MP = [0,1,2]
+      return [0,1,2]
     case 5:
-      return hero.MP = [1,1,1]
+      return [1,1,1]
     case 6:
-      return hero.MP = [2,2,2]
+      return [2,2,2]
     default:
-      return hero.MP = [0,0,0]
+      return [0,0,0]
   }
 }
 
@@ -203,6 +203,23 @@ export function battleResultNum(res){
       break;
   }
   return index
+}
+
+export function getWeapon(dice) {
+  switch (dice){
+    case 1:
+      return "Dagger";
+    case 2:
+      return "T-Dagger";
+    case 3:
+      return "Bow";
+    case 4:
+      return "Sword";
+    case 5:
+      return "Hammer";
+    case 6:
+      return "Axe";
+  }
 }
 
 export function battleResultType(type){

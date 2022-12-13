@@ -25,8 +25,9 @@ interface MonsterInfo {
 }
 
 const CharactersList = require("../Database/heroes.json")
+const FollowersList = require("../Database/heroes_followers.json")
 
-export function idRandomHero(save) {
+export function idRandomHero() {
     let min = Math.ceil(1)
     let max = Math.floor(23)
     let res = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -37,25 +38,26 @@ export const randomHero = (id => CharactersList.find(m => {
     return m.id === id;
 }))
 
+const chooseFollowerRace = (Race => FollowersList.find(m => {
+    return m.Race === Race;
+}))
+
 export const Team = Array(6).fill({})
 let TeamBattlePos = Array(3).fill(Array(3).fill({}))
 let EnemiesBattlePos = Array(3).fill(Array(3).fill({}))
 
-export function addTeamMember(item) {
-    return Team.push(item)
-}
 
-export function chooseFollowerRace(dice) {
+export function chooseFollowerTemplate(dice) {
    let res = halfDiceRoll(dice)
     switch (res) {
         case 1:
-            return "Elf"
+            return chooseFollowerRace("Elf")
             break;
         case 2:
-            return "Dwarf";
+            return chooseFollowerRace("Dwarf");
             break;
         case 3:
-            return "Human";
+            return chooseFollowerRace("Human");
             break;
     }
 }
