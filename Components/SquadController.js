@@ -1,4 +1,4 @@
-import {halfDiceRoll, monsterDataset} from "./GameController";
+import {halfDiceRoll} from "./GameController";
 
 interface CharacterInfo {
     "id": number;
@@ -30,8 +30,7 @@ const FollowersList = require("../Database/heroes_followers.json")
 export function idRandomHero() {
     let min = Math.ceil(1)
     let max = Math.floor(23)
-    let res = Math.floor(Math.random() * (max - min + 1)) + min;
-    return res;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 export const randomHero = (id => CharactersList.find(m => {
@@ -39,7 +38,7 @@ export const randomHero = (id => CharactersList.find(m => {
 }))
 
 const chooseFollowerRace = (Race => FollowersList.find(m => {
-    return m.Race === Race;
+   return m.Race === Race
 }))
 
 export const Team = Array(6).fill({})
@@ -73,3 +72,4 @@ export function setEnemySquadPos(item, x, y){
 export function updateEnemySquad(){
     EnemiesBattlePos = Array(3).fill(Array(3).fill({}))
 }
+

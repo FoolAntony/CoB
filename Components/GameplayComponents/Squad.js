@@ -1,88 +1,127 @@
 import { StatusBar } from 'expo-status-bar';
 import React, {useEffect, useState} from "react";
-import {Button, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {Alert, Button, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {useMachine} from "@xstate/react";
 import {teamMachine} from "../StateMachine";
-import {chooseFollowerTemplate, idRandomHero, randomHero, Team} from "../SquadController";
+import {
+    chooseFollowerTemplate,
+    idRandomHero,
+    randomHero,
+    Team,
+} from "../SquadController";
 import {getWeapon, magicPotential, rollDice} from "../GameController";
-import {stringify} from "xstate/es/json";
 import {TextInput} from "react-native-gesture-handler";
 
 
 export default function Squad() {
 
-  const [state, send] = useMachine(teamMachine);
-  const [inputName, setInputName] = useState("")
-  const [team, updateTeam] = useState(Team);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [member, showMember] = useState({});
-  const [modalOption, setModalOption] = useState("showHeroInfo");
-  const [dice, updateDice] = useState(null)
-  const [isSubmitted, setIsSubmitted] = useState(false)
+    const [state, send] = useMachine(teamMachine);
+    const [inputName, setInputName] = useState("");
+    const [team, updateTeam] = useState(Team);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [member, showMember] = useState({});
+    const [modalOption, setModalOption] = useState("showHeroInfo");
+    const [dice, updateDice] = useState(null);
 
-  let upteam = Team
-  let idUsed = [];
 
- function AddMembersButton() {
-    switch (state.value){
-      case "empty":
-      case "addHeroes":
-        return (
-            <TouchableOpacity  onPress={teamAddNewMember}>
-              <View style={styles.textButtonContainer}>
-                <Text style={styles.textButton}>Add New Hero!</Text>
-              </View>
-            </TouchableOpacity>
-        );
+    let upTeam = Team;
+    let idUsed = [];
 
-      default:
-        return (
-            <TouchableOpacity  onPress={addNewFollower}>
-              <View style={styles.textButtonContainer}>
-                <Text style={styles.textButton}>Add New Follower!</Text>
-              </View>
-            </TouchableOpacity>
-        );
-
-      case "full":
-        return (
-            <TouchableOpacity  onPress={teamAddNewMember}>
-              <View style={styles.textButtonContainer}>
-                <Text style={styles.textButton}>Next Stage!</Text>
-              </View>
-            </TouchableOpacity>
-        );
-    }
- }
-
-  const teamAddNewMember = () => {
+    const teamAddNewMember = () => {
     if(state.context.amount < 3) {
-      let id = idRandomHero()
+      let id = checkHeroDuplication()
       console.log(id)
       send("ADD")
-      upteam[state.context.amount] = randomHero(id)
-      updateTeam(upteam)
-      idUsed.push(id)
+      upTeam[state.context.amount] = Object.assign({}, randomHero(id))
+      updateTeam(upTeam)
     }
     else{
       console.log("Team is completed, thank you!")
     }
-  }
+}
 
-  const Dice = () => {
-     setModalOption("DiceRoll");
-     updateDice(rollDice())
-  }
+const checkWeaponDuplication = (weap) => {
+    console.log(weap)
+    if (upTeam[state.context.amount].Weapon.length === 0) {
+        return false;
+    }
+    else{
+        console.log(upTeam[state.context.amount].Weapon.includes(weap))
+        return upTeam[state.context.amount].Weapon.includes(weap);
+    }
+}
 
-  const SetMember = (member) => {
-      setModalOption("showHeroInfo");
-      showMember(member);
-      setModalVisible(true);
-  }
+const checkHeroDuplication = () => {
+    let id = idRandomHero()
+    for (;idUsed.includes(id);) {
+        id = idRandomHero()
+    }
+    idUsed.push(id)
+    return id;
+}
 
-  const addNewFollower = () => {
-     setModalOption("nextState");
-     setModalVisible(true);
+ const Dice = () => {
+ setModalOption("DiceRoll");
+ updateDice(rollDice())
+}
+
+ const SetMember = (member) => {
+  setModalOption("showHeroInfo");
+  showMember(member);
+  setModalVisible(true);
+}
+
+const addNewFollower = () => {
+    setModalOption("nextState");
+    setModalVisible(true);
+}
+
+    const FollowerStates = (data) => {
+     switch (state.value){
+         case "addFollowers":
+             upTeam[state.context.amount] = {...chooseFollowerTemplate(data)}
+             upTeam[state.context.amount].id += state.context.amount
+             updateTeam(upTeam)
+             send("NEXT")
+             setModalOption("InputName")
+             break;
+         case "addName":
+             upTeam[state.context.amount].Name = data
+             updateTeam(upTeam)
+             send("NEXT")
+             setModalOption("nextState")
+             break;
+         case "addWeapon":
+             if (upTeam[state.context.amount].Weapon === null)
+                 upTeam[state.context.amount].Weapon = []
+
+             let weapon = getWeapon(data)
+
+             if(checkWeaponDuplication(weapon) === false) {
+                 upTeam[state.context.amount].Weapon.push(weapon)
+                 updateTeam(upTeam)
+                 send("ADD")
+                 setModalOption("nextState")
+             }
+             else{
+                 Alert.alert("Your dice result has been repeated, but all weapons must be unique. Roll Again!")
+                 setModalOption("nextState");
+             }
+
+             break;
+         case "addMana":
+             upTeam[state.context.amount].MP = magicPotential(data)
+             updateTeam(upTeam)
+             send("NEXT")
+             SetMember(team[state.context.amount])
+             break;
+         default:
+             console.log("Some error in Follower State")
+     }
+}
+
+  const itemSeparator = () => {
+    return(<View style={styles.separator}/>)
   }
 
   function NextStateTemplate() {
@@ -106,36 +145,7 @@ export default function Squad() {
      }
   }
 
-  const FollowerStates = (data) => {
-     switch (state.value){
-         case "addFollowers":
-             upteam[state.context.amount] = chooseFollowerTemplate(data)
-             updateTeam(upteam)
-             send("NEXT")
-             setModalOption("InputName")
-             break;
-         case "addName":
-             upteam[state.context.amount].Name = data
-             updateTeam(upteam)
-             send("NEXT")
-             setModalOption("nextState")
-             break;
-         case "addWeapon":
-             upteam[state.context.amount].Weapon.push(getWeapon(data))
-             updateTeam(upteam)
-             send("ADD")
-             setModalOption("nextState")
-             break;
-         case "addMana":
-             upteam[state.context.amount].MP = magicPotential(data)
-             updateTeam(upteam)
-             send("NEXT")
-             SetMember(team[state.context.amount])
-             break;
-         default:
-             console.log("Some error in Follower State")
-     }
-  }
+
 
 
   function ModalScreen() {
@@ -261,9 +271,39 @@ export default function Squad() {
     }
   }
 
-  const itemSeparator = () => {
-    return(<View style={styles.separator}/>)
-  }
+
+
+  function AddMembersButton() {
+    switch (state.value){
+      case "empty":
+      case "addHeroes":
+        return (
+            <TouchableOpacity  onPress={teamAddNewMember}>
+              <View style={styles.textButtonContainer}>
+                <Text style={styles.textButton}>Add New Hero!</Text>
+              </View>
+            </TouchableOpacity>
+        );
+
+      default:
+        return (
+            <TouchableOpacity  onPress={addNewFollower}>
+              <View style={styles.textButtonContainer}>
+                <Text style={styles.textButton}>Add New Follower!</Text>
+              </View>
+            </TouchableOpacity>
+        );
+
+      case "full":
+        return (
+            <TouchableOpacity  onPress={teamAddNewMember}>
+              <View style={styles.textButtonContainer}>
+                <Text style={styles.textButton}>Next Stage!</Text>
+              </View>
+            </TouchableOpacity>
+        );
+    }
+ }
 
 
   useEffect(() => {

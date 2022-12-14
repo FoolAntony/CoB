@@ -6,7 +6,7 @@
     "WP": 5,
     "MP": null ,
     "RV": 2,
-    "Weapon": [],
+    "Weapon": null,
     "WS": ["Bow", 1],
     "Skill": ["Negotiation", 1]
   },
@@ -17,18 +17,18 @@
     "WP": 6,
     "MP": null ,
     "RV": 2,
-    "Weapon": [],
+    "Weapon": null,
     "WS": ["Axe", 1],
     "Skill": ["Detrap", 1]
   },
   {
     "id": 26,
-    "Name": [],
+    "Name": null,
     "Race": "Human",
     "WP": 7,
     "MP": null,
     "RV": 1,
-    "Weapon": [],
+    "Weapon": null,
     "WS": ["Sword", 1],
     "Skill": ["Hellgate", 1]
   }

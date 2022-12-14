@@ -14,7 +14,7 @@ board[25][25] = {type: "Start"}
 export const monsterDataset = require('../Database/monsters.json')
 
 const monst = (name => monsterDataset.find(m => {
-  return m.Name === name;
+  return Object.assign({}, m.Name === name);
 }))
 
 const monsterTable = [
