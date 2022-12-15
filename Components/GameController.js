@@ -14,31 +14,35 @@ board[25][25] = {type: "Start"}
 export const monsterDataset = require('../Database/monsters.json')
 
 const monst = (name => monsterDataset.find(m => {
-  return Object.assign({}, m.Name === name);
+  return m.Name === name;
 }))
 
+export const getMonsterCopy = (name) => {
+  return JSON.parse(JSON.stringify({}, monst(name)))
+}
+
 const monsterTable = [
-    [monst("Evil Mage"), monst("Evil Hero"), monst("Cronk"),
-      monst("Gargoyle"), monst("Chimera"), monst("Medusa")],
-    [monst("Orc"), monst("Troll"), monst("Vampire"),
-      monst("Harpy"), monst("Ogre"), monst("Minotaur")],
-    [monst("Dire Wolf"), monst("Wight"), monst("Warg"),
-      monst("Evil Mage"), monst("Evil Hero"), monst("Cronk")],
-    [monst("Gargoyle"), monst("Chimera"), monst("Medusa"),
-      monst("Orc"), monst("Hydra"), monst("Vampire")],
-    [monst("Harpy"), monst("Ogre"), monst("Minotaur"),
-      monst("Dire Wolf"), monst("Wight"), monst("Warg")],
-    [monst("Skeleton"), monst("Ghost"), monst("Skeleton"),
-      monst("Ghost"), monst("Troll"), monst("Hydra")]
+    [getMonsterCopy("Evil Mage"), getMonsterCopy("Evil Hero"), getMonsterCopy("Cronk"),
+      getMonsterCopy("Gargoyle"), getMonsterCopy("Chimera"), getMonsterCopy("Medusa")],
+    [getMonsterCopy("Orc"), getMonsterCopy("Troll"), getMonsterCopy("Vampire"),
+      getMonsterCopy("Harpy"), getMonsterCopy("Ogre"), getMonsterCopy("Minotaur")],
+    [getMonsterCopy("Dire Wolf"), getMonsterCopy("Wight"), getMonsterCopy("Warg"),
+      getMonsterCopy("Evil Mage"), getMonsterCopy("Evil Hero"), getMonsterCopy("Cronk")],
+    [getMonsterCopy("Gargoyle"), getMonsterCopy("Chimera"), getMonsterCopy("Medusa"),
+      getMonsterCopy("Orc"), getMonsterCopy("Hydra"), getMonsterCopy("Vampire")],
+    [getMonsterCopy("Harpy"), getMonsterCopy("Ogre"), getMonsterCopy("Minotaur"),
+      getMonsterCopy("Dire Wolf"), getMonsterCopy("Wight"), getMonsterCopy("Warg")],
+    [getMonsterCopy("Skeleton"), getMonsterCopy("Ghost"), getMonsterCopy("Skeleton"),
+      getMonsterCopy("Ghost"), getMonsterCopy("Troll"), getMonsterCopy("Hydra")]
 ];
 
 const monsterWanderingTable = [
-  [monst("Evil Hero"), monst("Evil Mage"), monst("Chimera")],
-  [monst("Gargoyle"), monst("Medusa"), monst("Orc")],
-  [monst("Troll"), monst("Vampire"), monst("Harpy")],
-  [monst("Ogre"), monst("Minotaur"), monst("Dire Wolf")],
-  [monst("Wight"), monst("Warg"), monst("Ghost")],
-  [monst("Hydra"), monst("Skeleton"), monst("Cronk")]
+  [getMonsterCopy("Evil Hero"), getMonsterCopy("Evil Mage"), getMonsterCopy("Chimera")],
+  [getMonsterCopy("Gargoyle"), getMonsterCopy("Medusa"), getMonsterCopy("Orc")],
+  [getMonsterCopy("Troll"), getMonsterCopy("Vampire"), getMonsterCopy("Harpy")],
+  [getMonsterCopy("Ogre"), getMonsterCopy("Minotaur"), getMonsterCopy("Dire Wolf")],
+  [getMonsterCopy("Wight"), getMonsterCopy("Warg"), getMonsterCopy("Ghost")],
+  [getMonsterCopy("Hydra"), getMonsterCopy("Skeleton"), getMonsterCopy("Cronk")]
 ];
 
 export const battleResultTable = [

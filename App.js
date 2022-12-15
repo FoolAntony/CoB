@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React, {useState} from "react";
-import {StyleSheet, View,} from 'react-native';
+import {ImageBackground, StyleSheet, View,} from 'react-native';
 import {NavigationContainer} from "@react-navigation/native";
 
 import Header from "./Components/Header"
@@ -18,6 +18,7 @@ import Battlefield from "./Components/GameplayComponents/Battlefield";
 
 const GameTab = createBottomTabNavigator();
 
+const WallPaper = require("./assets/background.jpg")
 
 function GameTabs() {
   return (
@@ -34,7 +35,7 @@ export default function App() {
   return (
       <View style={styles.container}>
           <Header/>
-            <Squad/>
+          <Squad/>
       </View>
 
   );
@@ -44,5 +45,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  image: {
+    flex: 1,
+    justifyContent: "center"
   },
 });

@@ -1,8 +1,18 @@
 import { StatusBar } from 'expo-status-bar';
 import React, {useEffect, useState} from "react";
-import {Alert, Button, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {
+    Alert,
+    Button,
+    FlatList, ImageBackground,
+    KeyboardAvoidingView,
+    Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import {useMachine} from "@xstate/react";
-import {teamMachine} from "../StateMachine";
+import {teamMachine} from "../StateMachine/StateMachine.Squad";
 import {
     chooseFollowerTemplate,
     idRandomHero,
@@ -14,9 +24,8 @@ import {TextInput} from "react-native-gesture-handler";
 
 
 export default function Squad() {
-
+    const [isFocused, setIsFocused] = useState(false)
     const [state, send] = useMachine(teamMachine);
-    const [inputName, setInputName] = useState("");
     const [team, updateTeam] = useState(Team);
     const [modalVisible, setModalVisible] = useState(false);
     const [member, showMember] = useState({});
@@ -32,7 +41,7 @@ export default function Squad() {
       let id = checkHeroDuplication()
       console.log(id)
       send("ADD")
-      upTeam[state.context.amount] = Object.assign({}, randomHero(id))
+      upTeam[state.context.amount] = JSON.parse(JSON.stringify(randomHero(id)))
       updateTeam(upTeam)
     }
     else{
@@ -40,22 +49,22 @@ export default function Squad() {
     }
 }
 
-const checkWeaponDuplication = (weap) => {
-    console.log(weap)
+const checkWeaponDuplication = (weapon_check) => {
+    console.log(weapon_check)
     if (upTeam[state.context.amount].Weapon.length === 0) {
         return false;
     }
     else{
-        console.log(upTeam[state.context.amount].Weapon.includes(weap))
-        return upTeam[state.context.amount].Weapon.includes(weap);
+        console.log(upTeam[state.context.amount].Weapon.includes(weapon_check))
+        return upTeam[state.context.amount].Weapon.includes(weapon_check);
     }
 }
 
 const checkHeroDuplication = () => {
     let id = idRandomHero()
-    for (;idUsed.includes(id);) {
+    do{
         id = idRandomHero()
-    }
+    }while (idUsed.includes(id))
     idUsed.push(id)
     return id;
 }
@@ -79,7 +88,7 @@ const addNewFollower = () => {
     const FollowerStates = (data) => {
      switch (state.value){
          case "addFollowers":
-             upTeam[state.context.amount] = {...chooseFollowerTemplate(data)}
+             upTeam[state.context.amount] = JSON.parse(JSON.stringify(chooseFollowerTemplate(data)))
              upTeam[state.context.amount].id += state.context.amount
              updateTeam(upTeam)
              send("NEXT")
@@ -92,11 +101,7 @@ const addNewFollower = () => {
              setModalOption("nextState")
              break;
          case "addWeapon":
-             if (upTeam[state.context.amount].Weapon === null)
-                 upTeam[state.context.amount].Weapon = []
-
              let weapon = getWeapon(data)
-
              if(checkWeaponDuplication(weapon) === false) {
                  upTeam[state.context.amount].Weapon.push(weapon)
                  updateTeam(upTeam)
@@ -185,7 +190,7 @@ const addNewFollower = () => {
       case "nextState":
         return(
             <Modal
-                  animationType="slide"
+                  animationType="fade"
                   transparent={true}
                   visible={modalVisible}
                   onRequestClose={() => {
@@ -207,46 +212,38 @@ const addNewFollower = () => {
               </Modal>
         );
       case "InputName":
-          let n = ""
+        const [inputName, setInputName] = useState("")
         return(
-            <Modal
-                  animationType="slide"
-                  transparent={true}
-                  visible={modalVisible}
-                  onRequestClose={() => {
-                    console.log("Modal has been closed.");
-                    setModalVisible(() => false);
-                  }}
-              >
-                <View style={styles.centeredView}>
-                  <View style={styles.modalView}>
-                    <NextStateTemplate/>
-                      <TextInput
-                          style={styles.input}
-                          value={inputName}
-                          onChangeText={text => setInputName(text)}
-                          onSubmitEditing={() => {
-                              FollowerStates(inputName)
-                          }}
-                          placeholder={"Example: Artorias"}
-                      />
-                    {/*<TouchableOpacity*/}
-                    {/*    style={[styles.button, styles.buttonClose]}*/}
-                    {/*    onPress={(n) => {*/}
-                    {/*        setInputName(n)*/}
-                    {/*        FollowerStates(inputName)*/}
-                    {/*    }}*/}
-                    {/*>*/}
-                    {/*  <Text style={styles.textStyle}>Submit!</Text>*/}
-                    {/*</TouchableOpacity>*/}
-                  </View>
-                </View>
-              </Modal>
+                <Modal
+                      animationType="fade"
+                      transparent={true}
+                      visible={modalVisible}
+                      onRequestClose={() => {
+                        console.log("Modal has been closed.");
+                        setModalVisible(() => false);
+                      }}
+                  >
+                    <KeyboardAvoidingView behavior={"height"} style={styles.centeredView}>
+                      <View style={styles.modalView}>
+                        <NextStateTemplate/>
+                          <TextInput
+                              style={styles.input}
+                              defaultValue={inputName}
+                              onChangeText={setInputName}
+                              onSubmitEditing={() => {
+                                  setInputName("")
+                                  FollowerStates(inputName)
+                              }}
+                              placeholder={"Example: Artorias"}
+                          />
+                      </View>
+                    </KeyboardAvoidingView>
+                  </Modal>
         );
       case "DiceRoll":
             return(
                 <Modal
-                      animationType="slide"
+                      animationType="fade"
                       transparent={true}
                       visible={modalVisible}
                       onRequestClose={() => {
@@ -309,11 +306,13 @@ const addNewFollower = () => {
   useEffect(() => {
     console.log(team)
     console.log(state.value);
-  }, [state, team])
+    console.log(team[5] === team[6])
+    console.log(isFocused)
+  }, [state, team, isFocused])
 
   return (
     <View style={styles.container}>
-      <ModalScreen/>
+        <ModalScreen/>
       <View style={styles.headerTextContainer}>
         <Text style={styles.textHeader}>Make your Squad of Heroes!</Text>
       </View>
@@ -360,7 +359,7 @@ const styles = StyleSheet.create({
   },
   textHeader: {
     fontSize:22,
-    alignSelf:"center"
+    alignSelf:"center",
   },
   list: {
     alignSelf: "center",
@@ -442,6 +441,7 @@ const styles = StyleSheet.create({
     margin: 12,
     borderWidth: 1,
     padding: 10,
+      width: 150
   },
 
 });

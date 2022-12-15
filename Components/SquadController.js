@@ -37,6 +37,10 @@ export const randomHero = (id => CharactersList.find(m => {
     return m.id === id;
 }))
 
+export const getRandomHero = (id) => {
+    return JSON.parse(JSON.stringify(randomHero(d)))
+}
+
 const chooseFollowerRace = (Race => FollowersList.find(m => {
    return m.Race === Race
 }))
