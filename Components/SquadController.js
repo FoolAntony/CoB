@@ -38,14 +38,14 @@ export const randomHero = (id => CharactersList.find(m => {
 }))
 
 export const getRandomHero = (id) => {
-    return JSON.parse(JSON.stringify(randomHero(d)))
+    return JSON.parse(JSON.stringify(randomHero(id)))
 }
 
 const chooseFollowerRace = (Race => FollowersList.find(m => {
    return m.Race === Race
 }))
 
-export const Team = Array(6).fill({})
+export const Team = Array(9).fill({})
 let TeamBattlePos = Array(3).fill(Array(3).fill({}))
 let EnemiesBattlePos = Array(3).fill(Array(3).fill({}))
 
@@ -55,13 +55,10 @@ export function chooseFollowerTemplate(dice) {
     switch (res) {
         case 1:
             return chooseFollowerRace("Elf")
-            break;
         case 2:
             return chooseFollowerRace("Dwarf");
-            break;
         case 3:
             return chooseFollowerRace("Human");
-            break;
     }
 }
 

@@ -2,8 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, {useEffect, useState} from "react";
 import {
     Alert,
-    Button,
-    FlatList, ImageBackground,
+    FlatList,
     KeyboardAvoidingView,
     Modal,
     StyleSheet,
@@ -14,7 +13,7 @@ import {
 import {useMachine} from "@xstate/react";
 import {teamMachine} from "../StateMachine/StateMachine.Squad";
 import {
-    chooseFollowerTemplate,
+    chooseFollowerTemplate, getRandomHero,
     idRandomHero,
     randomHero,
     Team,
@@ -22,9 +21,11 @@ import {
 import {getWeapon, magicPotential, rollDice} from "../GameController";
 import {TextInput} from "react-native-gesture-handler";
 
+export let CompleteSquad = Array(9).fill({})
+
+const idUsed = [];
 
 export default function Squad() {
-    const [isFocused, setIsFocused] = useState(false)
     const [state, send] = useMachine(teamMachine);
     const [team, updateTeam] = useState(Team);
     const [modalVisible, setModalVisible] = useState(false);
@@ -32,20 +33,21 @@ export default function Squad() {
     const [modalOption, setModalOption] = useState("showHeroInfo");
     const [dice, updateDice] = useState(null);
 
-
     let upTeam = Team;
-    let idUsed = [];
+
 
     const teamAddNewMember = () => {
     if(state.context.amount < 3) {
       let id = checkHeroDuplication()
-      console.log(id)
+      console.log(idUsed)
       send("ADD")
-      upTeam[state.context.amount] = JSON.parse(JSON.stringify(randomHero(id)))
+      upTeam[state.context.amount] = getRandomHero(id)
       updateTeam(upTeam)
+      SetMember(team[state.context.amount]);
+      CompleteSquad = team;
     }
     else{
-      console.log("Team is completed, thank you!")
+      console.log("Team is completed, thank you!");
     }
 }
 
@@ -119,6 +121,7 @@ const addNewFollower = () => {
              updateTeam(upTeam)
              send("NEXT")
              SetMember(team[state.context.amount])
+             CompleteSquad = team
              break;
          default:
              console.log("Some error in Follower State")
@@ -133,15 +136,39 @@ const addNewFollower = () => {
      switch (state.value) {
          case "addFollowers":
              return(
-                 <Text style={styles.modalText}>Find Who Is Your Follower!</Text>
+                 <View>
+                     <Text style={styles.modalText}>Find Who Is Your Follower!</Text>
+                     <Text style={styles.modalText}>Possible results:</Text>
+                     <Text style={styles.modalText}>1-2: Elf</Text>
+                     <Text style={styles.modalText}>3-4: Dwarf</Text>
+                     <Text style={styles.modalText}>5-6: Human</Text>
+                 </View>
+
              )
          case "addWeapon":
              return(
-                 <Text style={styles.modalText}>Get Your {state.context.weapons + 1} Follower Weapon!</Text>
+                 <View>
+                    <Text style={styles.modalText}>Get Your {state.context.weapons + 1} Follower Weapon!</Text>
+                     <Text style={styles.modalText}>Possible results:</Text>
+                     <Text style={styles.modalText}>1: Dagger</Text>
+                     <Text style={styles.modalText}>2: Throwing Dagger</Text>
+                     <Text style={styles.modalText}>3: Bow</Text>
+                     <Text style={styles.modalText}>4: Sword</Text>
+                     <Text style={styles.modalText}>5: Hammer</Text>
+                     <Text style={styles.modalText}>6: Axe</Text>
+                 </View>
              )
          case "addMana":
              return(
-                 <Text style={styles.modalText}>Find What Magic Potential Your Follower Has!</Text>
+                 <View>
+                     <Text style={styles.modalText}>Find What Magic Potential Your Follower Has!</Text>
+                     <Text style={styles.modalText}>Possible results (Red/Yellow/Blue):</Text>
+                     <Text style={styles.modalText}>1-2: [0, 0, 0]</Text>
+                     <Text style={styles.modalText}>3: [2, 1, 0]</Text>
+                     <Text style={styles.modalText}>4: [0, 1, 2]</Text>
+                     <Text style={styles.modalText}>5: [1, 1, 1]</Text>
+                     <Text style={styles.modalText}>6: [2, 2, 2]</Text>
+                 </View>
              )
          case "addName":
              return(
@@ -149,8 +176,6 @@ const addNewFollower = () => {
              )
      }
   }
-
-
 
 
   function ModalScreen() {
@@ -306,9 +331,7 @@ const addNewFollower = () => {
   useEffect(() => {
     console.log(team)
     console.log(state.value);
-    console.log(team[5] === team[6])
-    console.log(isFocused)
-  }, [state, team, isFocused])
+  }, [state, team])
 
   return (
     <View style={styles.container}>
@@ -327,7 +350,7 @@ const addNewFollower = () => {
                 <View>
                   <TouchableOpacity onPress={() => SetMember(item)}>
                     <View style={[styles.textContainer, {backgroundColor: item.Name ? "silver" : "grey"}]}>
-                      <Text style={styles.text}>{item.Name ? item.Name : "Lonely..."}</Text>
+                      <Text style={styles.text}>{item.Name ? item.Name : index < 6 ? "Lonely..." : "Empty"}</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -363,7 +386,7 @@ const styles = StyleSheet.create({
   },
   list: {
     alignSelf: "center",
-    height:256,
+    height:405,
     width:360,
     borderColor:"red",
   },

@@ -13,36 +13,34 @@ board[25][25] = {type: "Start"}
 
 export const monsterDataset = require('../Database/monsters.json')
 
-const monst = (name => monsterDataset.find(m => {
+export const monst = (name => monsterDataset.find(m => {
   return m.Name === name;
 }))
 
-export const getMonsterCopy = (name) => {
-  return JSON.parse(JSON.stringify({}, monst(name)))
-}
 
-const monsterTable = [
-    [getMonsterCopy("Evil Mage"), getMonsterCopy("Evil Hero"), getMonsterCopy("Cronk"),
-      getMonsterCopy("Gargoyle"), getMonsterCopy("Chimera"), getMonsterCopy("Medusa")],
-    [getMonsterCopy("Orc"), getMonsterCopy("Troll"), getMonsterCopy("Vampire"),
-      getMonsterCopy("Harpy"), getMonsterCopy("Ogre"), getMonsterCopy("Minotaur")],
-    [getMonsterCopy("Dire Wolf"), getMonsterCopy("Wight"), getMonsterCopy("Warg"),
-      getMonsterCopy("Evil Mage"), getMonsterCopy("Evil Hero"), getMonsterCopy("Cronk")],
-    [getMonsterCopy("Gargoyle"), getMonsterCopy("Chimera"), getMonsterCopy("Medusa"),
-      getMonsterCopy("Orc"), getMonsterCopy("Hydra"), getMonsterCopy("Vampire")],
-    [getMonsterCopy("Harpy"), getMonsterCopy("Ogre"), getMonsterCopy("Minotaur"),
-      getMonsterCopy("Dire Wolf"), getMonsterCopy("Wight"), getMonsterCopy("Warg")],
-    [getMonsterCopy("Skeleton"), getMonsterCopy("Ghost"), getMonsterCopy("Skeleton"),
-      getMonsterCopy("Ghost"), getMonsterCopy("Troll"), getMonsterCopy("Hydra")]
+
+export const monsterTable = [
+    [monst("Evil Mage"), monst("Evil Hero"), monst("Cronk"),
+      monst("Gargoyle"), monst("Chimera"), monst("Medusa")],
+    [monst("Orc"), monst("Troll"), monst("Vampire"),
+      monst("Harpy"), monst("Ogre"), monst("Minotaur")],
+    [monst("Dire Wolf"), monst("Wight"), monst("Warg"),
+      monst("Evil Mage"), monst("Evil Hero"), monst("Cronk")],
+    [monst("Gargoyle"), monst("Chimera"), monst("Medusa"),
+      monst("Orc"), monst("Hydra"), monst("Vampire")],
+    [monst("Harpy"), monst("Ogre"), monst("Minotaur"),
+      monst("Dire Wolf"), monst("Wight"), monst("Warg")],
+    [monst("Skeleton"), monst("Ghost"), monst("Skeleton"),
+      monst("Ghost"), monst("Troll"), monst("Hydra")]
 ];
 
-const monsterWanderingTable = [
-  [getMonsterCopy("Evil Hero"), getMonsterCopy("Evil Mage"), getMonsterCopy("Chimera")],
-  [getMonsterCopy("Gargoyle"), getMonsterCopy("Medusa"), getMonsterCopy("Orc")],
-  [getMonsterCopy("Troll"), getMonsterCopy("Vampire"), getMonsterCopy("Harpy")],
-  [getMonsterCopy("Ogre"), getMonsterCopy("Minotaur"), getMonsterCopy("Dire Wolf")],
-  [getMonsterCopy("Wight"), getMonsterCopy("Warg"), getMonsterCopy("Ghost")],
-  [getMonsterCopy("Hydra"), getMonsterCopy("Skeleton"), getMonsterCopy("Cronk")]
+export const monsterWanderingTable = [
+  [monst("Evil Hero"), monst("Evil Mage"), monst("Chimera")],
+  [monst("Gargoyle"), monst("Medusa"), monst("Orc")],
+  [monst("Troll"), monst("Vampire"), monst("Harpy")],
+  [monst("Ogre"), monst("Minotaur"), monst("Dire Wolf")],
+  [monst("Wight"), monst("Warg"), monst("Ghost")],
+  [monst("Hydra"), monst("Skeleton"), monst("Cronk")]
 ];
 
 export const battleResultTable = [
@@ -115,12 +113,12 @@ export function magicPotential(dice){
   }
 }
 
-export function negotiation(dice, hero, monster, spell){
+export function negotiation(dice, hero, monster){
   let spell_buff = 0
 
-  if (spell.spell_name === "Oratory") {
-    spell_buff = 4
-  }
+  // if (hero.Spells"Oratory") {
+  //   spell_buff = 4
+  // }
 
   if (hero.Skill[0] === "Negotiation") {
     return dice + spell_buff + hero.Skill[1] - monster.NV
@@ -132,6 +130,7 @@ export function negotiation(dice, hero, monster, spell){
 export function monsterType(d1, d2, dice){
   let i = d1 - 1;
   let j = d2 - 1;
+  let res = monsterTable[i][j]
   let a = 1;
   if ((d1 === 4 && d2 === 1) || (d1 === 4 && d2 === 2) || (d1 === 5 && d2 === 2) || (d1 === 5 && d2 === 5)) {
     a = 2;
@@ -144,7 +143,7 @@ export function monsterType(d1, d2, dice){
   } else if ((d1 === 3 && d2 === 6) || (d1 === 4 && d2 === 4)) {
     a = dice + 1;
   }
-  return {monster: monsterTable[i][j], amount: a};
+  return {monster: res, amount: a};
 }
 
 export function monsterWanderingType(d1,d2,dice){
@@ -348,4 +347,55 @@ export function getMagicItem(d1, d2) {
   let i = d1 - 1
   let j = d2 - 1
   return magicItemsTable[i][j]
+}
+
+export function getMonsterHP(item, dice){
+  switch(item.Name){
+    case "Harpy":
+      item.WP = halfDiceRoll(dice)
+      break;
+    case "Evil Hero":
+      item.WP = dice + 4;
+      break;
+    case "Cronk":
+    case "Skeleton":
+      item.WP = dice + 1;
+      break;
+    case "Gargoyle":
+      item.WP = (dice * 3) + 1;
+      break;
+    case "Chimera":
+    case "Minotaur":
+      item.WP = (dice * 2) + 2;
+      break;
+    case "Medusa":
+    case "Wight":
+      item.WP = dice * 2;
+      break;
+    case "Troll":
+    case "Hydra":
+      item.WP = (dice * 2) + 3;
+      break;
+    case "Vampire":
+      item.WP = dice * 3;
+      break;
+    case "Orc":
+      item.WP = dice;
+      break;
+    case "Ogre":
+    case "Demon":
+      item.WP = dice + 2;
+      break;
+    case "Dire Wolf":
+    case "Warg":
+      item.WP = halfDiceRoll(dice) + 2;
+      break;
+    case "Ghost":
+    case "Evil Mage":
+      item.WP = dice + 3;
+      break;
+    case "X the Unknown":
+      item.WP = dice + 6;
+      break;
+  }
 }

@@ -1,27 +1,27 @@
 import { createMachine, assign } from 'xstate';
 
 function isNoNegotiation(context,event) {
-  return context.isNoNegotiationWas && context.isNoTradeWas
+  return context.isNoNegotiationWas && context.isNoBriberyWas
 }
 
-function isNoTrade(context, event) {
-  return context.isNoTradeWas
+function isNoBribery(context, event) {
+  return context.isNoBriberyWas && context.isNoNegotiationWas === false
 }
 
-const setTradeIsFailed = assign({
-  isNoTradeWas: (context,event) => context.isNoTradeWas = false
+const setBriberyIsFailed = assign({
+  isNoBriberyWas: (context,event) => context.isNoBriberyWas = false
 })
 
 const setNegotiationIsFailed = assign({
   isNoNegotiationWas: (context,event) => context.isNoNegotiationWas = false
 });
 
-const battleMachine = createMachine({
+export const battleMachine = createMachine({
   id: 'battle',
   initial: 'idle',
   context: {
     isNoNegotiationWas: true,
-    isNoTradeWas: true
+    isNoBriberyWas: true
   },
   states: {
     idle: {
@@ -30,6 +30,11 @@ const battleMachine = createMachine({
       }
     },
     kindOfMonsters: {
+      on:{
+        NEXT: "monstersAmount"
+      }
+    },
+    monstersAmount: {
       on:{
         NEXT: "findMonstersHP"
       }
@@ -48,15 +53,16 @@ const battleMachine = createMachine({
           target: "doNegotiation",
           cond: "isNoNegotiation"
           },
-        TRADE: {
-          target: "doTrade",
-          cond: "isNoTrade"
+        BRIBE: {
+          target: "doBribery",
+          cond: "isNoBribery"
           },
         FIGHT: "doFight"
       }
     },
     doNegotiation: {
       on: {
+        BACK: "chooseAction",
         SUCCESS: "endSession",
         FAIL: {
           target: "chooseAction",
@@ -64,17 +70,19 @@ const battleMachine = createMachine({
         }
       }
     },
-    doTrade: {
+    doBribery: {
       on:{
+        BACK: "chooseAction",
         SUCCESS: "endSession",
         FAIL: {
           target: "chooseAction",
-          actions: "setTradeIsFailed"
+          actions: "setBriberyIsFailed"
         }
       }
     },
     doFight: {
       on: {
+        BACK: "chooseAction",
         WIN: "endSession",
         LOSE: "endSession"
       }
@@ -86,6 +94,6 @@ const battleMachine = createMachine({
   predictableActionArguments: true
 },
 {
-  guards: { isNoNegotiation, isNoTrade },
-  actions: { setNegotiationIsFailed, setTradeIsFailed },
+  guards: { isNoNegotiation, isNoBribery },
+  actions: { setNegotiationIsFailed, setBriberyIsFailed },
 });

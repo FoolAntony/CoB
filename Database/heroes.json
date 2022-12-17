@@ -20,7 +20,7 @@
     "RV": 2,
     "CB": 0,
     "Weapon": ["Sword", "T-Dagger"],
-    "WS": [],
+    "WS": null,
     "Skill": ["Hellgate", 1]
   },
   {
@@ -32,7 +32,7 @@
     "RV": 1,
     "CB": 0,
     "Weapon": ["Sword", "T-Dagger"],
-    "WS": [],
+    "WS": null,
     "Skill": ["Hellgate", 2]
   },
   {
@@ -68,7 +68,7 @@
     "RV": 2,
     "CB": 0,
     "Weapon": ["Bow", "T-Dagger"],
-    "WS": [],
+    "WS": null,
     "Skill": ["Hellgate", 2]
   },
   {
@@ -128,7 +128,7 @@
     "RV": 3,
     "CB": 0,
     "Weapon": ["Bow", "Dagger"],
-    "WS": [],
+    "WS": null,
     "Skill": ["Hellgate", 1]
   },
   {
@@ -266,7 +266,7 @@
   {
     "id": 23,
     "Name": "Zurik",
-    "Race": "Human",
+    "Race": "Dwarf",
     "WP": 8,
     "MP": [3, 4, 5] ,
     "RV": 2,

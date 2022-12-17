@@ -6,6 +6,7 @@
     "WP": 5,
     "MP": null ,
     "RV": 2,
+    "CB": null,
     "Weapon": [],
     "WS": ["Bow", 1],
     "Skill": ["Negotiation", 1]
@@ -17,6 +18,7 @@
     "WP": 6,
     "MP": null ,
     "RV": 2,
+    "CB": null,
     "Weapon": [],
     "WS": ["Axe", 1],
     "Skill": ["Detrap", 1]
@@ -28,6 +30,7 @@
     "WP": 7,
     "MP": null,
     "RV": 1,
+    "CB": null,
     "Weapon": [],
     "WS": ["Sword", 1],
     "Skill": ["Hellgate", 1]

@@ -18,8 +18,6 @@ import Battlefield from "./Components/GameplayComponents/Battlefield";
 
 const GameTab = createBottomTabNavigator();
 
-const WallPaper = require("./assets/background.jpg")
-
 function GameTabs() {
   return (
         <GameTab.Navigator>
@@ -35,7 +33,9 @@ export default function App() {
   return (
       <View style={styles.container}>
           <Header/>
-          <Squad/>
+          <NavigationContainer>
+              <GameTabs/>
+          </NavigationContainer>
       </View>
 
   );
