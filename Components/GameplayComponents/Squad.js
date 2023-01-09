@@ -15,13 +15,19 @@ import {teamMachine} from "../StateMachine/StateMachine.Squad";
 import {
     chooseFollowerTemplate, getRandomHero,
     idRandomHero,
-    randomHero,
     Team,
 } from "../SquadController";
-import {getWeapon, magicPotential, rollDice} from "../GameController";
+import {findPrimarySun, getWeapon, magicPotential, rollDice, spellsList} from "../GameController";
 import {TextInput} from "react-native-gesture-handler";
 
-export let CompleteSquad = Array(9).fill({})
+export let CompleteSquad = {
+    squad: Array(9).fill({}),
+    money: 0
+}
+
+let chosen = ""
+
+let spellNumber = 1
 
 const idUsed = [];
 
@@ -32,6 +38,8 @@ export default function Squad() {
     const [member, showMember] = useState({});
     const [modalOption, setModalOption] = useState("showHeroInfo");
     const [dice, updateDice] = useState(null);
+    const [sun, setSun] = useState(null)
+    const [chosenSpell, updateChosenSpell] = useState(null)
 
     let upTeam = Team;
 
@@ -44,7 +52,7 @@ export default function Squad() {
       upTeam[state.context.amount] = getRandomHero(id)
       updateTeam(upTeam)
       SetMember(team[state.context.amount]);
-      CompleteSquad = team;
+      CompleteSquad.squad = team;
     }
     else{
       console.log("Team is completed, thank you!");
@@ -111,8 +119,7 @@ const addNewFollower = () => {
                  setModalOption("nextState")
              }
              else{
-                 Alert.alert("Your dice result has been repeated, but all weapons must be unique. Roll Again!")
-                 setModalOption("nextState");
+                 setModalOption("Error")
              }
 
              break;
@@ -121,7 +128,30 @@ const addNewFollower = () => {
              updateTeam(upTeam)
              send("NEXT")
              SetMember(team[state.context.amount])
-             CompleteSquad = team
+             CompleteSquad.squad = team
+             break;
+         case "primarySun":
+             setSun(findPrimarySun(data))
+             send("NEXT")
+             setModalVisible(false)
+             break;
+         case "addHeroSpell":
+             if (upTeam[state.context.hasSpells].MP[sun] >= spellNumber) {
+                 if (upTeam[state.context.hasSpells].Spells.includes(data) === false) {
+                     upTeam[state.context.hasSpells].Spells.push(data)
+                     updateTeam(upTeam)
+                     setModalOption("nextState")
+                     spellNumber++
+                 } else {
+                    setModalOption("Error")
+                 }
+             } else if (state.context.hasSpells !== 5){
+                 setModalOption("Error")
+                 spellNumber = 1
+                 send("ADD")
+             } else if (state.context.hasSpells === 5) {
+                 setModalOption("Error")
+             }
              break;
          default:
              console.log("Some error in Follower State")
@@ -170,11 +200,135 @@ const addNewFollower = () => {
                      <Text style={styles.modalText}>6: [2, 2, 2]</Text>
                  </View>
              )
+         case "primarySun":
+             return(
+                 <View>
+                     <Text style={styles.modalText}>Now you will choose your Primary Sun!</Text>
+                     <Text style={styles.modalText}>Your Hero's amount of Spells will depend on their number for Primary Sun</Text>
+                     <Text style={styles.modalText}>Possible results:</Text>
+                     <Text style={styles.modalText}>1-2: Red</Text>
+                     <Text style={styles.modalText}>3-4: Yellow</Text>
+                     <Text style={styles.modalText}>5-6: Blue</Text>
+                 </View>
+             )
+         case "addHeroSpell":
+             const [spellIndex, changeSpellIndex] = useState(0)
+             chosen = spellsList[spellIndex]
+             return(
+                 <View>
+                     <Text style={styles.modalText}>Choose {team[state.context.hasSpells].Name}'s {spellNumber} Spell from the list of Spells!</Text>
+                     <Text style={styles.modalText}>Read more about each spell in the Info section.</Text>
+                     <Text style={styles.modalText}>This hero can have {team[state.context.hasSpells].MP[sun] - spellNumber + 1}</Text>
+                     <Text style={styles.modalText}>REMEMBER:</Text>
+                     <Text style={styles.modalText}>(C): Combat-Only Spells</Text>
+                     <Text style={styles.modalText}>(NC): Non-Combat-Only Spells</Text>
+                     <Text style={styles.modalText}>(N): Negotiation Spells</Text>
+                     <Text style={styles.modalText}>(B): Bribery Spells</Text>
+                     <View style={{flexDirection:"row", height:50}}>
+                        <TouchableOpacity
+                            style={{marginLeft:10}}
+                              onPress={() => {
+                                  changeSpellIndex(spellIndex !== 0? spellIndex - 1 : 23)
+                              }}
+                          >
+                              <View style={[styles.button, {backgroundColor: "crimson", width:100}]}>
+                                  <Text style={styles.textStyle}>Previous</Text>
+                              </View>
+                          </TouchableOpacity>
+                        <View style={{width:100}}>
+                            <Text style={[styles.textStyle, {color:"black"}]}>{chosen}</Text>
+                        </View>
+                        <TouchableOpacity
+                            style={{marginRight:10}}
+                              onPress={() => {
+                                  changeSpellIndex(spellIndex !== 23? spellIndex + 1 : 0)
+                              }}
+                          >
+                              <View style={[styles.button, {backgroundColor: "steelblue", width:100}]}>
+                                  <Text style={styles.textStyle}>Next</Text>
+                              </View>
+                          </TouchableOpacity>
+                    </View>
+                 </View>
+             )
          case "addName":
              return(
                  <Text style={styles.modalText}>Name Your New Follower!</Text>
              )
      }
+  }
+
+  function ModalButton() {
+        switch (state.value) {
+            default:
+                return(
+                    <TouchableOpacity
+                        style={[styles.button, styles.buttonClose]}
+                        onPress={Dice}
+                    >
+                      <Text style={styles.textStyle}>Roll a Dice!</Text>
+                    </TouchableOpacity>
+                )
+            case "addHeroSpell":
+                return(
+                    <TouchableOpacity
+                        style={[styles.button, styles.buttonClose]}
+                        onPress={() => FollowerStates(chosen)}
+                    >
+                      <Text style={styles.textStyle}>Choose!</Text>
+                    </TouchableOpacity>
+                )
+        }
+  }
+
+  function ErrorMessage() {
+        switch (state.value) {
+            case "addWeapon":
+                return(
+                    <View>
+                        <Text style={styles.modalText}>WARNING!</Text>
+                        <Text style={styles.modalText}>Your dice result has been repeated, but all weapons must be unique. Roll Again!</Text>
+                        <TouchableOpacity
+                            style={[styles.button, styles.buttonClose]}
+                            onPress={() => setModalOption("nextState")}
+                        >
+                          <Text style={styles.textStyle}>OK!</Text>
+                        </TouchableOpacity>
+                    </View>
+                );
+            case "addHeroSpell":
+                 if (state.context.hasSpells !== 5) {
+                    return (
+                        <View>
+                            <Text style={styles.modalText}>WARNING!</Text>
+                            <Text style={styles.modalText}>This hero's spells limit has been exceeded!</Text>
+                        <TouchableOpacity
+                            style={[styles.button, styles.buttonClose]}
+                            onPress={() => setModalOption("nextState")}
+                        >
+                          <Text style={styles.textStyle}>OK!</Text>
+                        </TouchableOpacity>
+                        </View>
+                    );
+                }
+                 break;
+            case "finish":
+                return (
+                        <View>
+                            <Text style={styles.modalText}>WARNING!</Text>
+                            <Text style={styles.modalText}>All heroes got their spells!</Text>
+                        <TouchableOpacity
+                            style={[styles.button, styles.buttonClose]}
+                            onPress={() => {
+                                setModalOption("nextState")
+                                setModalVisible(false)
+                            }}
+                        >
+                          <Text style={styles.textStyle}>OK!</Text>
+                        </TouchableOpacity>
+                    </View>
+                    );
+        }
   }
 
 
@@ -197,6 +351,7 @@ const addNewFollower = () => {
                     <Text style={styles.modalText}>{member.Race ? "Race: " + member.Race : undefined}</Text>
                     <Text style={styles.modalText}>{member.WP ? "Wound Points / WP: " + member.WP : undefined}</Text>
                     <Text style={styles.modalText}>{member.MP ? "Mana Points / MP (Red/Yellow/Blue): " + member.MP : undefined}</Text>
+                    <Text style={styles.modalText}>{member.Spells ? "Spells: " + member.Spells : undefined}</Text>
                     <Text style={styles.modalText}>{member.RV ? "Resistance / RV: " + member.RV : undefined}</Text>
                     <Text style={styles.modalText}>{member.CB ? "Combat Bonus : " + member.CB : undefined}</Text>
                     <Text style={styles.modalText}>{member.Weapon ? "Weapons: " + member.Weapon : undefined}</Text>
@@ -226,12 +381,7 @@ const addNewFollower = () => {
                 <View style={styles.centeredView}>
                   <View style={styles.modalView}>
                     <NextStateTemplate/>
-                    <TouchableOpacity
-                        style={[styles.button, styles.buttonClose]}
-                        onPress={Dice}
-                    >
-                      <Text style={styles.textStyle}>Roll a Dice!</Text>
-                    </TouchableOpacity>
+                    <ModalButton/>
                   </View>
                 </View>
               </Modal>
@@ -289,6 +439,23 @@ const addNewFollower = () => {
                     </View>
                   </Modal>
             );
+        case "Error":
+            return(
+                <Modal
+                      animationType="fade"
+                      transparent={true}
+                      visible={modalVisible}
+                      onRequestClose={() => {
+                        console.log("Modal has been closed.");
+                        setModalVisible(() => false);
+                      }}>
+                    <View style={styles.centeredView}>
+                         <View style={styles.modalView}>
+                            <ErrorMessage/>
+                         </View>
+                    </View>
+                  </Modal>
+            );
 
     }
   }
@@ -307,7 +474,7 @@ const addNewFollower = () => {
             </TouchableOpacity>
         );
 
-      default:
+     case "addFollowers":
         return (
             <TouchableOpacity  onPress={addNewFollower}>
               <View style={styles.textButtonContainer}>
@@ -315,8 +482,25 @@ const addNewFollower = () => {
               </View>
             </TouchableOpacity>
         );
+     case "primarySun":
+        return (
+            <TouchableOpacity  onPress={addNewFollower}>
+              <View style={styles.textButtonContainer}>
+                <Text style={styles.textButton}>Find your Primary Sun!</Text>
+              </View>
+            </TouchableOpacity>
+        );
 
-      case "full":
+     case "addHeroSpell":
+        return (
+            <TouchableOpacity  onPress={addNewFollower}>
+              <View style={styles.textButtonContainer}>
+                <Text style={styles.textButton}>Add Spells!</Text>
+              </View>
+            </TouchableOpacity>
+        );
+
+      case "finish":
         return (
             <TouchableOpacity  onPress={teamAddNewMember}>
               <View style={styles.textButtonContainer}>
@@ -331,7 +515,10 @@ const addNewFollower = () => {
   useEffect(() => {
     console.log(team)
     console.log(state.value);
-  }, [state, team])
+    console.log("Sun:"+ sun);
+    console.log("Chosen: "+chosen);
+    console.log("SpellNum: " + spellNumber)
+  }, [state, team, sun, chosen])
 
   return (
     <View style={styles.container}>

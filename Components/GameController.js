@@ -6,6 +6,24 @@ interface SpellInfo{
   "type": string
 }
 
+export const tileDataset = require('../Database/TilesDB.json')
+
+export function idRandomTile() {
+    let min = Math.ceil(1)
+    let max = Math.floor(181)
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export const getTile = (id => tileDataset.find(m => {
+  return m.id === id;
+}))
+
+
+export const briberyMoneySet = [20, 40, 60, 80, 100, 150, 200, 300, 400]
+
+export const spellsList = ["Charm", "Blast", "Explosion", "Thunderbolt", "Sleep", "Redemption", "Magic Shield", "Hesitate", "Cease Fire", "Mental Attack",
+                            "Lock", "Magic Armor", "Neutralize Poison", "Stone-Flash", "Strength", "Teleport", "Heal", "Rejuvenate", "Thief", "Oratory",
+                            "Harassment", "Daunt", "Deal", "Flattery"]
 
 let board = Array(50).fill(Array(50).fill({}))
 board[25][25] = {type: "Start"}
@@ -110,6 +128,16 @@ export function magicPotential(dice){
       return [2,2,2]
     default:
       return [0,0,0]
+  }
+}
+
+export function findPrimarySun(dice) {
+  if(dice < 3){
+    return 0
+  } else if (dice >= 3 && dice < 5) {
+    return 1
+  } else if (dice >= 5) {
+    return 2
   }
 }
 
@@ -310,8 +338,9 @@ export function briberyGold(value) {
   return index
 }
 
-export function briberyResult(wp, gold){
-  let i = briberyWP_N(wp)
+export function briberyResult(monster, gold){
+  let sum = monster.WP + monster.NV
+  let i = briberyWP_N(sum)
   let j = briberyGold(gold)
   return briberyTable[j][i]
 }
@@ -350,52 +379,58 @@ export function getMagicItem(d1, d2) {
 }
 
 export function getMonsterHP(item, dice){
-  switch(item.Name){
-    case "Harpy":
-      item.WP = halfDiceRoll(dice)
-      break;
-    case "Evil Hero":
-      item.WP = dice + 4;
-      break;
-    case "Cronk":
-    case "Skeleton":
-      item.WP = dice + 1;
-      break;
-    case "Gargoyle":
-      item.WP = (dice * 3) + 1;
-      break;
-    case "Chimera":
-    case "Minotaur":
-      item.WP = (dice * 2) + 2;
-      break;
-    case "Medusa":
-    case "Wight":
-      item.WP = dice * 2;
-      break;
-    case "Troll":
-    case "Hydra":
-      item.WP = (dice * 2) + 3;
-      break;
-    case "Vampire":
-      item.WP = dice * 3;
-      break;
-    case "Orc":
-      item.WP = dice;
-      break;
-    case "Ogre":
-    case "Demon":
-      item.WP = dice + 2;
-      break;
-    case "Dire Wolf":
-    case "Warg":
-      item.WP = halfDiceRoll(dice) + 2;
-      break;
-    case "Ghost":
-    case "Evil Mage":
-      item.WP = dice + 3;
-      break;
-    case "X the Unknown":
-      item.WP = dice + 6;
-      break;
+  if (Array.isArray(dice) === false){
+    switch(item.Name) {
+      case "Harpy":
+        item.WP = halfDiceRoll(dice)
+        break;
+      case "Evil Hero":
+        item.WP = dice + 4;
+        break;
+      case "Cronk":
+      case "Skeleton":
+        item.WP = dice + 1;
+        break;
+      case "Medusa":
+      case "Wight":
+        item.WP = dice * 2;
+        break;
+      case "Vampire":
+        item.WP = dice * 3;
+        break;
+      case "Orc":
+        item.WP = dice;
+        break;
+      case "Ogre":
+      case "Demon":
+        item.WP = dice + 2;
+        break;
+      case "Dire Wolf":
+      case "Warg":
+        item.WP = halfDiceRoll(dice) + 2;
+        break;
+      case "Ghost":
+      case "Evil Mage":
+        item.WP = dice + 3;
+        break;
+      case "X the Unknown":
+        item.WP = dice + 6;
+        break;
+    }
+  }
+  else if(Array.isArray(dice) === true) {
+    switch (item.Name) {
+      case "Troll":
+      case "Hydra":
+        item.WP = dice[0] + dice[1] + 3;
+        break;
+      case "Gargoyle":
+        item.WP = dice[0] + dice[1] + dice[2] + 1;
+        break;
+      case "Chimera":
+      case "Minotaur":
+        item.WP = dice[0] + dice[1] + 2;
+        break;
+    }
   }
 }

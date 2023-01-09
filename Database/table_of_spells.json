@@ -7,7 +7,7 @@
   },
   {
     "id": 2,
-    "spell_name": "Wave",
+    "spell_name": "Blast",
     "cost": 1,
     "type": "C"
   },
@@ -19,7 +19,7 @@
   },
   {
     "id": 4,
-    "spell_name": "Lightning",
+    "spell_name": "Thunderbolt",
     "cost": 2,
     "type": "C"
   },
@@ -55,7 +55,7 @@
   },
   {
     "id": 10,
-    "spell_name": "Mental Attach",
+    "spell_name": "Mental Attack",
     "cost": 4,
     "type": "C"
   },
@@ -67,7 +67,7 @@
   },
   {
     "id": 12,
-    "spell_name": "Mage Armor",
+    "spell_name": "Magic Armor",
     "cost": 2,
     "type": "NC"
   },
@@ -121,27 +121,27 @@
   },
   {
     "id": 21,
-    "spell_name": "Cow",
+    "spell_name": "Harassment",
     "cost": 2,
     "type": "N"
   },
   {
     "id": 22,
     "spell_name": "Daunt",
-    "cost": 2,
-    "type": "C"
+    "cost": 3,
+    "type": "N"
   },
   {
     "id": 23,
-    "spell_name": "Hesitate",
-    "cost": 2,
-    "type": "C"
+    "spell_name": "Deal",
+    "cost": 1,
+    "type": "B"
   },
   {
     "id": 24,
-    "spell_name": "Hesitate",
+    "spell_name": "Flattery",
     "cost": 2,
-    "type": "C"
+    "type": "B"
   },
   {
     "id": 25,
@@ -153,6 +153,6 @@
     "id": 26,
     "spell_name": "Resurrect",
     "cost": 5,
-    "type": "S(C)"
+    "type": "S(NC)"
   }
 ]

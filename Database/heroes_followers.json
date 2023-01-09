@@ -8,6 +8,7 @@
     "RV": 2,
     "CB": null,
     "Weapon": [],
+    "Spells": [],
     "WS": ["Bow", 1],
     "Skill": ["Negotiation", 1]
   },
@@ -20,6 +21,7 @@
     "RV": 2,
     "CB": null,
     "Weapon": [],
+    "Spells": [],
     "WS": ["Axe", 1],
     "Skill": ["Detrap", 1]
   },
@@ -32,6 +34,7 @@
     "RV": 1,
     "CB": null,
     "Weapon": [],
+    "Spells": [],
     "WS": ["Sword", 1],
     "Skill": ["Hellgate", 1]
   }

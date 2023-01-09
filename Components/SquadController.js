@@ -26,6 +26,7 @@ interface MonsterInfo {
 
 const CharactersList = require("../Database/heroes.json")
 const FollowersList = require("../Database/heroes_followers.json")
+const spellsTable = require("../Database/table_of_spells.json")
 
 export function idRandomHero() {
     let min = Math.ceil(1)
@@ -36,6 +37,7 @@ export function idRandomHero() {
 export const randomHero = (id => CharactersList.find(m => {
     return m.id === id;
 }))
+
 
 export const getRandomHero = (id) => {
     return JSON.parse(JSON.stringify(randomHero(id)))

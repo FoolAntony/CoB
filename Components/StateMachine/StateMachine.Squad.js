@@ -4,11 +4,19 @@ import { createMachine, assign, actions } from "xstate";
 const addPerson = assign({
   amount: (context, event) => context.amount + 1,
 });
-
 // Guard to check if the team is full
 function isHeroesFull(context, event) {
   return context.amount === 3;
 }
+
+const addSpell = assign({
+hasSpells: (context, event) => context.hasSpells + 1,
+});
+
+function areSpellsAssigned(context, event) {
+  return context.hasSpells === 5;
+}
+
 
 function isFollowersFull(context, event) {
   return context.amount === 6;
@@ -34,6 +42,7 @@ export const teamMachine = createMachine(
     initial: "empty",
     context: {
       amount: 0,
+      hasSpells: 0,
       weapons:0
     },
     states: {
@@ -59,7 +68,7 @@ export const teamMachine = createMachine(
       },
       addFollowers: {
         always: {
-          target: "full",
+          target: "primarySun",
           cond: "isFollowersFull",
         },
         on: {
@@ -94,15 +103,32 @@ export const teamMachine = createMachine(
           }
         }
       },
-      full: {
-        type: "final",
+      primarySun: {
+        on: {
+          NEXT: "addHeroSpell"
+        },
       },
+      addHeroSpell: {
+        always:{
+          target: "finish",
+          cond: "areSpellsAssigned"
+        },
+        on:{
+          ADD: {
+            target: "addHeroSpell",
+            actions: "addSpell"
+          }
+        }
+      },
+      finish: {
+        type: "final"
+      }
     },
     predictableActionArguments:true
   },
   {
-    guards: { isHeroesFull, isFollowersFull, isWeaponsFull },
-    actions: { addPerson, addNewWeapon, restoreWeapons },
+    guards: { isHeroesFull, isFollowersFull, isWeaponsFull, areSpellsAssigned },
+    actions: { addPerson, addNewWeapon, restoreWeapons, addSpell },
   }
 );
 

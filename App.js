@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React, {useState} from "react";
-import {ImageBackground, StyleSheet, View,} from 'react-native';
+import { StyleSheet, View,} from 'react-native';
 import {NavigationContainer} from "@react-navigation/native";
 
 import Header from "./Components/Header"
@@ -8,7 +8,6 @@ import AboutScreen from "./Components/AboutScreen"
 import HomeScreen from "./Components/HomeScreen"
 import Settings from "./Components/Settings"
 import Rules from "./Components/Rules"
-import Viewport from "./Components/Viewport"
 import Test from "./Components/Test"
 import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import Board from "./Components/GameplayComponents/Board";
@@ -21,8 +20,8 @@ const GameTab = createBottomTabNavigator();
 function GameTabs() {
   return (
         <GameTab.Navigator>
-          <GameTab.Screen name={"Board"} component={Board}/>
           <GameTab.Screen name={"Squad"} component={Squad}/>
+          <GameTab.Screen name={"Board"} component={Board}/>
           <GameTab.Screen name={"Battle"} component={Battlefield}/>
         </GameTab.Navigator>
   );

@@ -21,7 +21,7 @@ export const battleMachine = createMachine({
   initial: 'idle',
   context: {
     isNoNegotiationWas: true,
-    isNoBriberyWas: true
+    isNoBriberyWas: true,
   },
   states: {
     idle: {
@@ -83,8 +83,20 @@ export const battleMachine = createMachine({
     doFight: {
       on: {
         BACK: "chooseAction",
-        WIN: "endSession",
-        LOSE: "endSession"
+        HEROES: "heroesTurn",
+        MONSTERS: "monstersTurn"
+      }
+    },
+    heroesTurn: {
+      on: {
+        FINISH: "monstersTurn",
+        DONE: "endSession"
+      }
+    },
+    monstersTurn: {
+      on: {
+        FINISH: "heroesTurn",
+        DONE: "endSession"
       }
     },
     endSession: {
