@@ -1,15 +1,40 @@
 import { createMachine, assign, actions } from "xstate";
 
+const setBossIsDefeated = assign({
+  isBossAlive: (context,event) => context.isBossAlive = true
+})
+
+function BossAlive(context,event) {
+  return context.isBossAlive === true
+}
+
+const setGoNewTile = assign({
+  goNewTile: (context,event) => context.goNewTile = true
+})
+
+const restoreGoNewTile = assign({
+  goNewTile: (context,event) => context.goNewTile = false
+})
+
 export const boardMachine = createMachine(
   {
     id: "board",
     initial: "idle",
     context: {
+      isBossAlive: false,
+      goNewTile: false
     },
     states: {
       idle: {
+        always: {
+          target: "finish",
+          cond: "BossAlive"
+        },
         on: {
-          NEW: "chooseNewTile",
+          NEW: {
+            target:"chooseNewTile",
+            actions:"setGoNewTile"
+          },
           OLD: "choosePrevTile"
         },
       },
@@ -25,6 +50,12 @@ export const boardMachine = createMachine(
         }
       },
       doDetrap: {
+        on: {
+          SUCCESS: "moveSquad",
+          FAIL: "doAction"
+        }
+      },
+      doAction: {
         on: {
           NEXT: "moveSquad"
         }
@@ -42,12 +73,18 @@ export const boardMachine = createMachine(
       checkMonsters: {
         on: {
           EXIST: "doBattle",
-          NONE: "idle"
+          NONE: {
+            target:"idle",
+            actions:"restoreGoNewTile"
+          }
         }
       },
       doBattle: {
         on:{
-          WIN: "idle",
+          WIN: {
+            target:"idle",
+            actions:"restoreGoNewTile"
+          },
           LOSE: "finish"
         }
       },
@@ -58,7 +95,7 @@ export const boardMachine = createMachine(
     predictableActionArguments:true
   },
   {
-    guards: { },
-    actions: { },
+    guards: { BossAlive },
+    actions: { setBossIsDefeated, restoreGoNewTile, setGoNewTile },
   }
 );

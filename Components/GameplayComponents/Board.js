@@ -216,6 +216,7 @@ export default function Board({route, navigation}) {
         setModalVisible(false)
         break;
       case "checkMonsters":
+        setModalVisible(false)
         if(state.context.goNewTile === true && isCorridorConnection(prevIndex) === false){
           if (dice < 4)
             send("EXIST")
@@ -226,7 +227,6 @@ export default function Board({route, navigation}) {
             send("EXIST")
           else
             send("NONE")
-          setModalVisible(false)
         }
 
     }
