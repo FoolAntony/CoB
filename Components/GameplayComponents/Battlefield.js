@@ -52,7 +52,7 @@ function areEqual(array1, array2) {
 
 
 
-export default function Battlefield() {
+export default function Battlefield({route, navigation}) {
   const [money, updateMoney] = useState(CompleteSquad.money)
   const [team, updateTeam] = useState(TeamSet)
   const [state, send] = useMachine(battleMachine)
@@ -187,7 +187,7 @@ export default function Battlefield() {
               }
               break;
           case "heroesTurn":
-              let damage = battleResult((member.CB + dice + (member.WS !== null ? (member.WS[0] === chosenWeapon ? member.WS[1] : 0) : 0)), chosenWeapon)
+              let damage = battleResult(((member.CB !== null ? member.CB : 0) + dice + (member.WS !== null ? (member.WS[0] === chosenWeapon ? member.WS[1] : 0) : 0)), chosenWeapon)
               monster.WP = monster.WP - damage;
               usedMembers[turn_index] = member;
               if (SquadIsOver(monsters) === true) {

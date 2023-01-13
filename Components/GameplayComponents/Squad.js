@@ -31,7 +31,7 @@ let spellNumber = 1
 
 const idUsed = [];
 
-export default function Squad() {
+export default function Squad({route, navigation}) {
     const [state, send] = useMachine(teamMachine);
     const [team, updateTeam] = useState(Team);
     const [modalVisible, setModalVisible] = useState(false);

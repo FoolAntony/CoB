@@ -2,8 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, {useEffect, useState} from "react";
 import {
   Alert,
-  FlatList,
-  Image,
+  FlatList, KeyboardAvoidingView, Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,9 +11,13 @@ import {
 import {ReactNativeZoomableView} from "@openspacelabs/react-native-zoomable-view";
 import {useMachine} from "@xstate/react";
 import {boardMachine} from "../StateMachine/StateMachine.Board";
-import {getTile, idRandomTile} from "../GameController";
+import {getTile, idRandomTile, rollDice} from "../GameController";
+import {CompleteSquad} from "./Squad";
+import {TextInput} from "react-native-gesture-handler";
 
 let initBoard = Array(187).fill({})
+
+let currentIndex = 93
 
 let squad =  {
     type: "squad",
@@ -25,6 +28,10 @@ let squad =  {
 const setInitBoard = () =>{
   initBoard[93] = {
     type: "entry",
+    top: "",
+    right: "",
+    bottom: "",
+    left: "",
     src: "",
     rotationAngle: 0,
     squad: JSON.parse(JSON.stringify(squad))
@@ -33,19 +40,17 @@ const setInitBoard = () =>{
   return initBoard
 }
 
-
-export default function Board() {
+export default function Board({route, navigation}) {
 
   const [boardMap, changeBoardMap] = useState(setInitBoard())
   const [state, send] = useMachine(boardMachine)
   const [tile, updateTile] = useState({})
+  const [modalVisible, setModalVisible] = useState(false)
+  const [modalOption, setModalOption] = useState("nextState")
+  const [dice, updateDice] = useState(null)
+  const [newIndex, setNewIndex] = useState(null)
+  const [prevIndex, setPrevIndex] = useState(null)
 
-  function Actions() {
-    switch (state.value) {
-      case "":
-        break;
-    }
-  }
 
   const RandomTile = () => {
     updateTile(JSON.parse(JSON.stringify(getTile(idRandomTile()))))
@@ -86,11 +91,41 @@ export default function Board() {
           mod_board[index] = JSON.parse(JSON.stringify(tile));
           changeBoardMap(mod_board);
           send("NEXT")
+          if(isCorridorConnection(index) === true)
+            send("NONE")
+          setNewIndex(index)
+          setModalVisible(true)
         } else {
           Alert.alert("Player have chosen wrong board place for this tile. Please, check if sides of the connected tiles are the same and there is squad in one of them!")
         }
         break;
+      case"moveSquad":
+        boardMap[index].squad = boardMap[currentIndex].squad;
+        boardMap[currentIndex].squad = {};
+        setPrevIndex(currentIndex)
+        currentIndex = index;
+        send("NEXT");
+        setModalOption("nextState")
+        setModalVisible(true)
     }
+  }
+
+  function isCorridorConnection(index) {
+    let res = false
+    if(currentIndex === (index - 11)){
+      if (boardMap[index].bottom === boardMap[currentIndex].top === "corr")
+        res = true
+    } else if(currentIndex === (index - 1)) {
+      if (boardMap[index].left === boardMap[currentIndex].right === "corr")
+        res = true
+    } else if(currentIndex === (index + 1)) {
+      if (boardMap[index].right === boardMap[currentIndex].left === "corr")
+        res = true
+    }else if(currentIndex === (index + 11)) {
+      if (boardMap[index].top === boardMap[currentIndex].bottom === "corr")
+        res = true
+    }
+      return res
   }
 
   function CheckTilesConnected(index) {
@@ -98,40 +133,42 @@ export default function Board() {
     let right_check = false
     let bottom_check = false
     let left_check = false
-    if(boardMap[index - 1] !== undefined && (Math.floor((index - 1) / 11) === Math.floor(index / 11)) && boardMap[index - 1].type !== undefined){
-      if(boardMap[index - 1].type === "entry" || boardMap[index - 1].right === tile.left)
+    if((index-1) === currentIndex || (index-11) === currentIndex || (index+1) === currentIndex || (index+11) === currentIndex) {
+      if (boardMap[index - 1] !== undefined && (Math.floor((index - 1) / 11) === Math.floor(index / 11)) && boardMap[index - 1].type !== undefined) {
+        if (boardMap[index - 1].type === "entry" || boardMap[index - 1].right === tile.left)
+          left_check = true
+        else
+          console.log("Left error!")
+      } else {
         left_check = true
-      else
-        console.log("Left error!")
-    } else {
-      left_check = true
-    }
-    if(boardMap[index - 11] !== undefined && boardMap[index - 11].type !== undefined){
-      if(boardMap[index - 11].type === "entry" || boardMap[index - 11].bottom === tile.top)
+      }
+      if (boardMap[index - 11] !== undefined && boardMap[index - 11].type !== undefined) {
+        if (boardMap[index - 11].type === "entry" || boardMap[index - 11].bottom === tile.top)
+          top_check = true
+        else
+          console.log("Top error!")
+      } else {
         top_check = true
-      else
-        console.log("Top error!")
-    } else {
-      top_check = true
-    }
-    if(boardMap[index + 1] !== undefined && (Math.floor((index + 1) / 11) === Math.floor(index / 11)) && boardMap[index + 1].type !== undefined){
-      if(boardMap[index + 1].type === "entry" || boardMap[index + 1].left === tile.right)
+      }
+      if (boardMap[index + 1] !== undefined && (Math.floor((index + 1) / 11) === Math.floor(index / 11)) && boardMap[index + 1].type !== undefined) {
+        if (boardMap[index + 1].type === "entry" || boardMap[index + 1].left === tile.right)
+          right_check = true
+        else
+          console.log("Right error!")
+      } else {
         right_check = true
-      else
-        console.log("Right error!")
-    } else {
-      right_check = true
-    }
-    if(boardMap[index + 11] !== undefined && boardMap[index + 11].type !== undefined){
-      if(boardMap[index + 11].type === "entry" || boardMap[index + 11].top === tile.bottom)
+      }
+      if (boardMap[index + 11] !== undefined && boardMap[index + 11].type !== undefined) {
+        if (boardMap[index + 11].type === "entry" || boardMap[index + 11].top === tile.bottom)
+          bottom_check = true
+        else
+          console.log("Bottom error!")
+      } else {
         bottom_check = true
-      else
-        console.log("Bottom error!")
-    } else {
-      bottom_check = true
-    }
-
-    return top_check && bottom_check && right_check && left_check
+      }
+      return top_check && bottom_check && right_check && left_check
+    } else
+      return false;
   }
 
   const RotateRight = () => {
@@ -152,6 +189,11 @@ export default function Board() {
     updateTile(modified)
   }
 
+   const Dice = () => {
+     setModalOption("DiceRoll");
+     updateDice(rollDice())
+  }
+
 
   const ChooseNewTile = () => {
     send("NEW")
@@ -161,13 +203,70 @@ export default function Board() {
     send("OLD")
   }
 
+  function AfterDiceActions(dice) {
+    switch(state.value){
+      case "checkTraps":
+        if (dice === 1)
+          send("EXIST")
+        else
+          send("NONE")
+        setModalVisible(false)
+        break;
+      case "checkMonsters":
+        if(state.context.goNewTile === true && isCorridorConnection(prevIndex) === false){
+          if (dice < 4)
+            send("EXIST")
+          else
+            send("NONE")
+        } else {
+          if(dice === 1)
+            send("EXIST")
+          else
+            send("NONE")
+        }
+
+    }
+  }
+
+  function NextStateTemplate() {
+  switch (state.value){
+    case "checkTraps":
+      return(
+          <View>
+            <Text style={styles.modalText}>Check if there are any traps!</Text>
+          </View>
+      )
+    case "checkMonsters":
+      return(
+          <View>
+            <Text style={styles.modalText}>Check if there are any monsters!</Text>
+          </View>
+      )
+  }
+}
+
+function ModalButton() {
+  switch (state.value){
+    default:
+      return(
+        <TouchableOpacity
+            style={[styles.button, styles.buttonClose]}
+            onPress={Dice}
+        >
+          <Text style={styles.textStyle}>Roll a Dice!</Text>
+        </TouchableOpacity>
+    )
+  }
+}
+
+
   function TileCheck(item) {
     if (item.type !== undefined) {
       return (
           <View style={[styles.textContainer, {borderColor: item.squad.type === "squad" ? "red" : "silver"}]}>
-            <Text style={[styles.text, {textAlign: "top"}]}>{item.top}</Text>
+            <Text style={[styles.text, {textAlign: "center"}]}>{item.top}</Text>
             <Text style={styles.text}>{item.left} {item.right}</Text>
-            <Text style={[styles.text, {textAlign: "bottom"}]}>{item.bottom}</Text>
+            <Text style={[styles.text, {textAlign: "center"}]}>{item.bottom}</Text>
           </View>
       )
     } else {
@@ -183,9 +282,9 @@ export default function Board() {
     if (tile.type !== undefined) {
       return (
           <View style={[styles.tileContainer]}>
-            <Text style={[styles.textButton, {textAlign: "top", color:"black", fontSize: 14}]}>{tile.top}</Text>
+            <Text style={[styles.textButton, {textAlign: "center", color:"black", fontSize: 14}]}>{tile.top}</Text>
             <Text style={[styles.textButton,{color:"black",fontSize: 14}]}>{tile.left} {tile.right}</Text>
-            <Text style={[styles.textButton, {textAlign: "bottom", color:"black",fontSize: 14}]}>{tile.bottom}</Text>
+            <Text style={[styles.textButton, {textAlign: "center", color:"black",fontSize: 14}]}>{tile.bottom}</Text>
           </View>
       )
     } else {
@@ -194,6 +293,54 @@ export default function Board() {
             <Text style={styles.textButton}>Empty</Text>
           </View>
       )
+    }
+  }
+
+  function ModalScreen() {
+    switch (modalOption) {
+      case "nextState":
+        return(
+            <Modal
+                  animationType="fade"
+                  transparent={true}
+                  visible={modalVisible}
+                  onRequestClose={() => {
+                    console.log("Modal has been closed.");
+                    setModalVisible(() => false);
+                  }}
+              >
+                <View style={styles.centeredView}>
+                  <View style={styles.modalView}>
+                    <NextStateTemplate/>
+                    <ModalButton/>
+                  </View>
+                </View>
+              </Modal>
+        );
+      case "DiceRoll":
+            return(
+                <Modal
+                      animationType="fade"
+                      transparent={true}
+                      visible={modalVisible}
+                      onRequestClose={() => {
+                        console.log("Modal has been closed.");
+                        setModalVisible(() => false);
+                      }}
+                  >
+                    <View style={styles.centeredView}>
+                      <View style={styles.modalView}>
+                        <Text style={styles.modalText}>Your Result: {dice}</Text>
+                        <TouchableOpacity
+                            style={[styles.button, styles.buttonClose]}
+                            onPress={() => AfterDiceActions(dice)}
+                        >
+                          <Text style={styles.textStyle}>Go Next Step!</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </Modal>
+            );
     }
   }
 
@@ -234,6 +381,16 @@ export default function Board() {
               </TouchableOpacity>
             </View>
         )
+      case "moveSquad":
+        return(
+            <View style={{flexDirection:"row"}}>
+              <TouchableOpacity onPress={() => BoardTilesActions(newIndex)}>
+                <View style={styles.textButtonContainer}>
+                  <Text style={styles.textButton}>Move Squad!</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+        )
     }
  }
 
@@ -244,6 +401,7 @@ export default function Board() {
 
   return (
       <View style={styles.container}>
+        <ModalScreen/>
         <View style={styles.zoomWrapper}>
             <ReactNativeZoomableView
               zoomEnabled={true}
@@ -318,7 +476,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   text: {
-    textAlign:"center",
     fontSize:5,
   },
   textContainer: {
