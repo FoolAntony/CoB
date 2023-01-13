@@ -9,21 +9,24 @@ import HomeScreen from "./Components/HomeScreen"
 import Settings from "./Components/Settings"
 import Rules from "./Components/Rules"
 import Test from "./Components/Test"
-import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import Board from "./Components/GameplayComponents/Board";
 import Squad from "./Components/GameplayComponents/Squad";
 import Battlefield from "./Components/GameplayComponents/Battlefield";
+import {createNativeStackNavigator} from "@react-navigation/native-stack";
+import {Team} from "./Components/SquadController";
 
 
-const GameTab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
-function GameTabs() {
+let team = Team;
+
+function StackScreens() {
   return (
-        <GameTab.Navigator>
-          <GameTab.Screen name={"Squad"} component={Squad}/>
-          <GameTab.Screen name={"Board"} component={Board}/>
-          <GameTab.Screen name={"Battle"} component={Battlefield}/>
-        </GameTab.Navigator>
+        <Stack.Navigator>
+          <Stack.Screen initialParams={{level: 1, squad: team, money: 0}} name={"Squad"} component={Squad}/>
+          <Stack.Screen name={"Board"} component={Board}/>
+          <Stack.Screen name={"Battle"} component={Battlefield}/>
+        </Stack.Navigator>
   );
 }
 
@@ -33,7 +36,7 @@ export default function App() {
       <View style={styles.container}>
           <Header/>
           <NavigationContainer>
-              <GameTabs/>
+            <StackScreens/>
           </NavigationContainer>
       </View>
 

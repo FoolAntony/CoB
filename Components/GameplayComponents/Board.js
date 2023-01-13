@@ -22,21 +22,23 @@ let squad =  {
     rotationAngle: 0
   }
 
-const setInitBoard = () =>{
+const setInitBoard = (squad) =>{
   initBoard[93] = {
     type: "entry",
     src: "",
     rotationAngle: 0,
-    squad: JSON.parse(JSON.stringify(squad))
+    squad: {
+      type:"squad",
+      team: squad
+    }
   };
-  initBoard[10] = JSON.parse(JSON.stringify(getTile(1)))
   return initBoard
 }
 
 
-export default function Board() {
+export default function Board({route, navigation}) {
 
-  const [boardMap, changeBoardMap] = useState(setInitBoard())
+  const [boardMap, changeBoardMap] = useState(setInitBoard(route.params.squad))
   const [state, send] = useMachine(boardMachine)
   const [tile, updateTile] = useState({})
 

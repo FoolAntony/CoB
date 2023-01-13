@@ -31,9 +31,9 @@ let spellNumber = 1
 
 const idUsed = [];
 
-export default function Squad() {
+export default function Squad({route, navigation}) {
     const [state, send] = useMachine(teamMachine);
-    const [team, updateTeam] = useState(Team);
+    const [team, updateTeam] = useState(route.params.squad);
     const [modalVisible, setModalVisible] = useState(false);
     const [member, showMember] = useState({});
     const [modalOption, setModalOption] = useState("showHeroInfo");
@@ -42,6 +42,17 @@ export default function Squad() {
     const [chosenSpell, updateChosenSpell] = useState(null)
 
     let upTeam = Team;
+
+    const NavigateToBoard = () => {
+        navigation.navigate({
+          name: "Board",
+          params: {
+              level: 1,
+              squad: team,
+              money: 0
+          }
+      });
+    }
 
 
     const teamAddNewMember = () => {
@@ -55,7 +66,7 @@ export default function Squad() {
       CompleteSquad.squad = team;
     }
     else{
-      console.log("Team is completed, thank you!");
+      console.log("Thank you!")
     }
 }
 
@@ -502,7 +513,7 @@ const addNewFollower = () => {
 
       case "finish":
         return (
-            <TouchableOpacity  onPress={teamAddNewMember}>
+            <TouchableOpacity  onPress={NavigateToBoard}>
               <View style={styles.textButtonContainer}>
                 <Text style={styles.textButton}>Next Stage!</Text>
               </View>

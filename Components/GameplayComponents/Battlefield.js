@@ -52,7 +52,7 @@ function areEqual(array1, array2) {
 
 
 
-export default function Battlefield() {
+export default function Battlefield({route, navigation}) {
   const [money, updateMoney] = useState(CompleteSquad.money)
   const [team, updateTeam] = useState(TeamSet)
   const [state, send] = useMachine(battleMachine)
