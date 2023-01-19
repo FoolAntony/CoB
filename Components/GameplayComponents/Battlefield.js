@@ -13,10 +13,6 @@ import {CompleteSquad} from "./Squad";
 import {useMachine} from "@xstate/react";
 import {battleMachine} from "../StateMachine/StateMachine.Battle";
 
-const TeamSet = [ {} , {} , {} ,
-                  {} , {} , {} ,
-                  {} , {} , {} ]
-
 const MonsterSet = [ {} , {} , {} ,
                      {} , {} , {} ,
                      {} , {} , {} ]
@@ -53,8 +49,8 @@ function areEqual(array1, array2) {
 
 
 export default function Battlefield({route, navigation}) {
-  const [money, updateMoney] = useState(CompleteSquad.money)
-  const [team, updateTeam] = useState(TeamSet)
+  const [money, updateMoney] = useState(route.params.money)
+  const [team, updateTeam] = useState(route.params.squad)
   const [state, send] = useMachine(battleMachine)
   const [monsters, updateMonsters] = useState(MonsterSet)
   const [modalVisible, setModalVisible] = useState(false);
@@ -106,7 +102,7 @@ export default function Battlefield({route, navigation}) {
               setModalVisible(true);
               break;
           case "heroesTurn":
-              if (member.Name !== undefined) {
+              if (member.Name !== undefined && monster.Name !== undefined) {
                   setModalOption("nextState")
                   showMonster(monster)
                   setModalVisible(true)
@@ -149,13 +145,14 @@ export default function Battlefield({route, navigation}) {
               let index = 8 - amount;
               if (uptMonsters[index - 1].Name !== undefined) {
                   setModalOption("nextState")
+                  amount++;
               } else {
                   setModalVisible(false);
                   send("NEXT")
+                  amount = 0
               }
               getMonsterHP(uptMonsters[index], dice);
               updateMonsters(uptMonsters)
-              amount++;
               break;
           case "doNegotiation":
               let res = negotiation(dice, member, monsters[8])
@@ -191,8 +188,13 @@ export default function Battlefield({route, navigation}) {
               monster.WP = monster.WP - damage;
               usedMembers[turn_index] = member;
               if (SquadIsOver(monsters) === true) {
-                  send("DONE")
                   setModalVisible(false)
+                  showMember({})
+                  usedMembers = Array(9).fill({})
+                  turn_index = 0
+                  updateDice(null)
+                  placeMonsters({monster: {}, amount: 9})
+                  send("DONE")
               } else if (SquadIsOver(monsters) === false) {
                   if (areEqual(team, usedMembers) === true) {
                       send("FINISH")
@@ -691,8 +693,6 @@ export default function Battlefield({route, navigation}) {
                 </View>
               </Modal>
         );
-
-
     }
   }
 
@@ -715,6 +715,7 @@ export default function Battlefield({route, navigation}) {
                   <TouchableOpacity onPress={() => SetMember(item)}>
                     <View style={[styles.textContainer, {backgroundColor: item.Name ? "silver" : "grey"}]}>
                       <Text style={styles.text}>{item.Name ? item.Name : "Empty"}</Text>
+                      <Text style={[styles.text, {fontSize: 14}]}>{item.WP ? "WP: " + item.WP : undefined}</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -739,6 +740,7 @@ export default function Battlefield({route, navigation}) {
                   <TouchableOpacity onPress={() => SetEnemy(item)}>
                     <View style={[styles.textContainer, {backgroundColor: item.Name ? "maroon" : "black"}]}>
                       <Text style={[styles.text, {color:"white"}]}>{item.Name ? item.Name : "Empty"}</Text>
+                      <Text style={[styles.text, {color:"white", fontSize: 14}]}>{item.WP ? "WP: " + item.WP : undefined}</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -814,7 +816,20 @@ export default function Battlefield({route, navigation}) {
         case "endSession":
             return(
                 <View style={[styles.textButtonContainer, {backgroundColor: null, width: 300}]}>
-                      <Text style={[styles.textButton, {color: "black"}]}>Fight Completed!</Text>
+                    <Text style={[styles.textButton, {color: "black"}]}>Fight Completed!</Text>
+                    <TouchableOpacity onPress={() => {
+                         navigation.navigate({
+                          name: "Board",
+                          params: {
+                              level: 1,
+                              squad: team,
+                              money: 0,
+                              XP: 0
+                          }
+                      });
+                    }}>
+                        <Text style={[styles.textButton, {color: "black"}]}>End Session!</Text>
+                    </TouchableOpacity>
                 </View>
             )
     }

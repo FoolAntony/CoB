@@ -23,7 +23,7 @@ let team = Team;
 function StackScreens() {
   return (
         <Stack.Navigator>
-          <Stack.Screen initialParams={{level: 1, squad: team, money: 0}} name={"Squad"} component={Squad}/>
+          <Stack.Screen initialParams={{level: 1, squad: team, money: 0, XP: 0}} name={"Squad"} component={Squad}/>
           <Stack.Screen name={"Board"} component={Board}/>
           <Stack.Screen name={"Battle"} component={Battlefield}/>
         </Stack.Navigator>

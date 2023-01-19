@@ -45,14 +45,24 @@ export const boardMachine = createMachine(
       },
       checkTraps: {
         on: {
-          EXIST: "doDetrap",
+          EXIST: "chooseMember",
           NONE: "moveSquad"
+        }
+      },
+      chooseMember:{
+        on:{
+          NEXT:"doDetrap"
         }
       },
       doDetrap: {
         on: {
           SUCCESS: "moveSquad",
-          FAIL: "doAction"
+          FAIL: "findType"
+        }
+      },
+      findType: {
+        on: {
+          NEXT: "doAction"
         }
       },
       doAction: {

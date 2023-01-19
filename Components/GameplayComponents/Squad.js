@@ -39,7 +39,15 @@ export default function Squad({route, navigation}) {
     const [modalOption, setModalOption] = useState("showHeroInfo");
     const [dice, updateDice] = useState(null);
     const [sun, setSun] = useState(null)
-    const [chosenSpell, updateChosenSpell] = useState(null)
+
+    useEffect(() => {
+        console.log(team)
+        console.log(state.value);
+        console.log("Sun:"+ sun);
+        console.log("Chosen: "+chosen);
+        console.log("SpellNum: " + spellNumber)
+        updateTeam(route.params?.squad)
+  }, [state, team, sun, chosen, route.params?.squad])
 
     let upTeam = Team;
 
@@ -49,7 +57,8 @@ export default function Squad({route, navigation}) {
           params: {
               level: 1,
               squad: team,
-              money: 0
+              money: 0,
+              XP: 0
           }
       });
     }
@@ -522,14 +531,6 @@ const addNewFollower = () => {
     }
  }
 
-
-  useEffect(() => {
-    console.log(team)
-    console.log(state.value);
-    console.log("Sun:"+ sun);
-    console.log("Chosen: "+chosen);
-    console.log("SpellNum: " + spellNumber)
-  }, [state, team, sun, chosen])
 
   return (
     <View style={styles.container}>

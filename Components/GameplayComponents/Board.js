@@ -11,7 +11,7 @@ import {
 import {ReactNativeZoomableView} from "@openspacelabs/react-native-zoomable-view";
 import {useMachine} from "@xstate/react";
 import {boardMachine} from "../StateMachine/StateMachine.Board";
-import {getTile, idRandomTile, rollDice} from "../GameController";
+import {battleResult, getTile, halfDiceRoll, idRandomTile, rollDice} from "../GameController";
 import {CompleteSquad} from "./Squad";
 import {TextInput} from "react-native-gesture-handler";
 
@@ -25,7 +25,7 @@ let squad =  {
     rotationAngle: 0
   }
 
-const setInitBoard = (squad) =>{
+const setInitBoard = (prms) =>{
   initBoard[93] = {
     type: "entry",
     top: "",
@@ -35,8 +35,11 @@ const setInitBoard = (squad) =>{
     src: "",
     rotationAngle: 0,
     squad: {
-      type:"squad",
-      team: squad
+      squad: prms.squad,
+      money: prms.money,
+      XP: prms.XP,
+      level: prms.level
+
     }
   };
   initBoard[10] = JSON.parse(JSON.stringify(getTile(1)))
@@ -45,7 +48,7 @@ const setInitBoard = (squad) =>{
 
 export default function Board({route, navigation}) {
 
-  const [boardMap, changeBoardMap] = useState(setInitBoard(route.params.squad))
+  const [boardMap, changeBoardMap] = useState(setInitBoard(route.params))
   const [state, send] = useMachine(boardMachine)
   const [tile, updateTile] = useState({})
   const [modalVisible, setModalVisible] = useState(false)
@@ -53,6 +56,32 @@ export default function Board({route, navigation}) {
   const [dice, updateDice] = useState(null)
   const [newIndex, setNewIndex] = useState(null)
   const [prevIndex, setPrevIndex] = useState(null)
+  const [memberIndex, updateMemberIndex] = useState(null);
+  const [trapType, setTrapType] = useState("")
+
+  useEffect(() => {
+   console.log(state.value)
+   console.log(tile)
+   if (route.params?.squad || route.params?.XP || route.params?.money){
+     if(state.value === "doBattle")
+       send("WIN")
+     let mod_board = JSON.parse(JSON.stringify(boardMap))
+     mod_board[currentIndex].squad = route.params
+     changeBoardMap(mod_board)
+   }
+  }, [state, tile, route.params?.squad, route.params?.money, route.params?.XP])
+
+  function SetMember(index){
+    if (boardMap[currentIndex].squad.squad[index].Skill[0] === "Detrap") {
+      updateMemberIndex(index)
+      send("NEXT")
+    } else {
+      send("NEXT")
+      send("FAIL")
+    }
+    setModalOption("nextState")
+    setModalVisible(true)
+  }
 
 
   const RandomTile = () => {
@@ -77,6 +106,24 @@ export default function Board({route, navigation}) {
       modified.rotationAngle -= 90
     updateTile(modified)
 
+  }
+
+    const RotateRight = () => {
+    if (tile.type === undefined) {
+      return;
+    }
+    let modified = JSON.parse(JSON.stringify(tile));
+    let t = modified.top;
+    modified.top = modified.left;
+    modified.left = modified.bottom;
+    modified.bottom = modified.right;
+    modified.right = t;
+     if (modified.rotationAngle === 270)
+      modified.rotationAngle = 0
+    else
+      modified.rotationAngle += 90
+    updateTile(modified)
+    updateTile(modified)
   }
 
   function BoardTilesActions(index) {
@@ -174,27 +221,38 @@ export default function Board({route, navigation}) {
       return false;
   }
 
-  const RotateRight = () => {
-    if (tile.type === undefined) {
-      return;
-    }
-    let modified = JSON.parse(JSON.stringify(tile));
-    let t = modified.top;
-    modified.top = modified.left;
-    modified.left = modified.bottom;
-    modified.bottom = modified.right;
-    modified.right = t;
-     if (modified.rotationAngle === 270)
-      modified.rotationAngle = 0
-    else
-      modified.rotationAngle += 90
-    updateTile(modified)
-    updateTile(modified)
-  }
 
    const Dice = () => {
-     setModalOption("DiceRoll");
-     updateDice(rollDice())
+      setModalOption("DiceRoll");
+      if(state.value !== "doAction") {
+          updateDice(rollDice());
+      } else {
+          switch (trapType) {
+              default:
+                  updateDice(rollDice());
+                  break;
+              case "Poison Arrows":
+                  let a = rollDice()
+                  let b = rollDice()
+                  updateDice([a, b])
+                  break;
+          }
+      }
+  }
+
+  const CheckTrapType = (dice) => {
+      switch(dice){
+          case 1:
+              return "Arrows"
+          case 2:
+              return "Poison Arrows"
+          case 3:
+          case 5:
+              return "Poison Gas"
+          case 4:
+          case 6:
+              return "Explosion"
+      }
   }
 
 
@@ -209,22 +267,83 @@ export default function Board({route, navigation}) {
   function AfterDiceActions(dice) {
     switch(state.value){
       case "checkTraps":
-        if (dice === 1)
+        if (dice === 1) {
           send("EXIST")
-        else
+          setModalOption("nextState")
+          setModalVisible(true)
+        } else {
           send("NONE")
-        setModalVisible(false)
+          setModalOption("nextState")
+          setModalVisible(false)
+        }
         break;
+        case "doDetrap":
+        let max = boardMap[currentIndex].squad.squad[memberIndex].Skill[1]
+        if (dice <= max) {
+            send("SUCCESS")
+            setModalVisible(false)
+        }
+        else {
+            send("FAIL")
+            setModalVisible(true)
+        }
+        setModalOption("nextState")
+
+        break;
+      case "findType":
+          setTrapType(CheckTrapType(dice))
+          setModalOption("nextState")
+          send("NEXT")
+          setModalVisible(true)
+          break;
+      case "doAction":
+          let mod_board = JSON.parse(JSON.stringify(boardMap))
+          switch (trapType){
+              case "Arrows":
+                  let damage_1 = battleResult(dice, "Bow")
+                  mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_1
+                  break;
+              case "Poison Arrows":
+                  let damage_2 = battleResult(dice[0], "Bow") + halfDiceRoll(dice[1])
+                  mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_2
+                  break;
+              case "Poison Gas":
+                  let damage_3 = battleResult(halfDiceRoll(dice), "Bow")
+                  mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_3
+                  break;
+              case "Explosion":
+                  for (let i = 0; i < boardMap[currentIndex].squad.squad.length; i++){
+                      if(mod_board[currentIndex].squad.squad[i].Name !== undefined)
+                          mod_board[currentIndex].squad.squad[i].WP = mod_board[currentIndex].squad.squad[i].WP - 1
+                  }
+                  break;
+          }
+          changeBoardMap(mod_board)
+          setModalOption("nextState")
+          setModalVisible(false)
+          send("NEXT")
+          break;
       case "checkMonsters":
+        setModalOption("nextState")
         setModalVisible(false)
         if(state.context.goNewTile === true && isCorridorConnection(prevIndex) === false){
-          if (dice < 4)
+          if (dice < 4) {
             send("EXIST")
+            navigation.navigate({
+              name: "Battle",
+              params: boardMap[currentIndex].squad
+            })
+          }
           else
             send("NONE")
         } else {
-          if(dice === 1)
+          if(dice === 1) {
             send("EXIST")
+            navigation.navigate({
+              name: "Battle",
+              params: boardMap[currentIndex].squad
+            })
+          }
           else
             send("NONE")
         }
@@ -246,6 +365,50 @@ export default function Board({route, navigation}) {
             <Text style={styles.modalText}>Check if there are any monsters!</Text>
           </View>
       )
+    case "chooseMember":
+      return(
+          <View>
+            <Text style={styles.modalText}>Choose who will detrap!</Text>
+            <Text style={styles.modalText}>If hero does not have "Detrap" skill, detrap will be failed!</Text>
+            <Text style={styles.modalText}>Your dice roll result must be lower that or equal to the skill value!</Text>
+            <View style={styles.list}>
+              <FlatList
+                  style={styles.flatlist}
+                  scrollEnabled={false}
+                  data={boardMap[currentIndex].squad.squad}
+                  numColumns={3}
+                  renderItem={({item, index}) => (
+                      <View>
+                        <TouchableOpacity onPress={() => SetMember(index)}>
+                          <View style={[styles.tileContainer, {backgroundColor: item.Name ? "silver" : "grey"}]}>
+                            <Text style={[styles.textButton, {textAlign: "center", color:"black",fontSize: 14}]}>{item.Name ? item.Name : index < 6 ? "Lonely..." : "Empty"}</Text>
+                            <Text style={[styles.textButton, {textAlign: "center", color:"black",fontSize: 14}]}>{item.Skill ? item.Skill[0] + ": " + item.Skill[1] : null}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      </View>
+                  )}
+              />
+            </View>
+          </View>
+      )
+      case "doDetrap":
+          return(
+              <View>
+                <Text style={styles.modalText}>Try to detrap!</Text>
+              </View>
+        )
+      case "findType":
+          return(
+              <View>
+                <Text style={styles.modalText}>Find the type of the trap!</Text>
+              </View>
+          )
+      case "doAction":
+          return(
+              <View>
+                <Text style={styles.modalText}>Roll dice to find damage!</Text>
+              </View>
+          )
   }
 }
 
@@ -259,7 +422,9 @@ function ModalButton() {
         >
           <Text style={styles.textStyle}>Roll a Dice!</Text>
         </TouchableOpacity>
-    )
+      )
+    case "chooseMember":
+      break;
   }
 }
 
@@ -267,7 +432,7 @@ function ModalButton() {
   function TileCheck(item) {
     if (item.type !== undefined) {
       return (
-          <View style={[styles.textContainer, {borderColor: item.squad.type === "squad" ? "red" : "silver"}]}>
+          <View style={[styles.textContainer, {borderColor: item.squad.squad !== undefined ? "red" : "silver"}]}>
             <Text style={[styles.text, {textAlign: "center"}]}>{item.top}</Text>
             <Text style={styles.text}>{item.left} {item.right}</Text>
             <Text style={[styles.text, {textAlign: "center"}]}>{item.bottom}</Text>
@@ -398,10 +563,6 @@ function ModalButton() {
     }
  }
 
- useEffect(() => {
-   console.log(state.value)
-   console.log(tile)
- }, [state, tile])
 
   return (
       <View style={styles.container}>
@@ -480,7 +641,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   text: {
-    fontSize:5,
+    fontSize:4,
   },
   textContainer: {
     alignContent: "center",
