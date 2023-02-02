@@ -12,8 +12,7 @@ import {ReactNativeZoomableView} from "@openspacelabs/react-native-zoomable-view
 import {useMachine} from "@xstate/react";
 import {boardMachine} from "../StateMachine/StateMachine.Board";
 import {battleResult, getTile, halfDiceRoll, idRandomTile, rollDice} from "../GameController";
-import {CompleteSquad} from "./Squad";
-import {TextInput} from "react-native-gesture-handler";
+
 
 let initBoard = Array(187).fill({})
 
@@ -42,7 +41,6 @@ const setInitBoard = (prms) =>{
 
     }
   };
-  initBoard[10] = JSON.parse(JSON.stringify(getTile(1)))
   return initBoard
 }
 
@@ -61,24 +59,54 @@ export default function Board({route, navigation}) {
 
   useEffect(() => {
    console.log(state.value)
-   console.log(tile)
-   if (route.params?.squad || route.params?.XP || route.params?.money){
-     if(state.value === "doBattle")
-       send("WIN")
-     let mod_board = JSON.parse(JSON.stringify(boardMap))
-     mod_board[currentIndex].squad = route.params
-     changeBoardMap(mod_board)
-   }
-  }, [state, tile, route.params?.squad, route.params?.money, route.params?.XP])
+   console.log(tile);
+   if(route.params?.squad)
+       if(state.value === "doBattle")
+           send("WIN")
+  }, [state, tile, route.params?.squad])
+
+  useEffect(() => {
+      if (route.params?.squad){
+         console.log("Squad update!")
+         let mod_board = JSON.parse(JSON.stringify(boardMap))
+         mod_board[currentIndex].squad.squad = route.params.squad;
+         changeBoardMap(mod_board)
+       }
+      if (route.params?.money){
+         console.log("Money update!")
+         let mod_board = JSON.parse(JSON.stringify(boardMap))
+         mod_board[currentIndex].squad.money = route.params.money;
+         changeBoardMap(mod_board)
+       }
+      if (route.params?.XP){
+         console.log("XP update!")
+         let mod_board = JSON.parse(JSON.stringify(boardMap))
+         mod_board[currentIndex].squad.XP = route.params.XP;
+         changeBoardMap(mod_board)
+       }
+  }, [route.params?.squad, route.params?.money, route.params?.XP])
+
+  useEffect(() => {
+        console.log(boardMap[currentIndex].squad.squad)
+  }, [boardMap[currentIndex].squad.squad])
+
+  useEffect(() => {
+        console.log(boardMap[currentIndex].squad.money)
+  }, [boardMap[currentIndex].squad.money])
+
+  useEffect(() => {
+        console.log(boardMap[currentIndex].squad.XP)
+  }, [boardMap[currentIndex].squad.XP])
+
 
   function SetMember(index){
     if (boardMap[currentIndex].squad.squad[index].Skill[0] === "Detrap") {
-      updateMemberIndex(index)
       send("NEXT")
     } else {
       send("NEXT")
       send("FAIL")
     }
+    updateMemberIndex(index)
     setModalOption("nextState")
     setModalVisible(true)
   }
@@ -122,7 +150,6 @@ export default function Board({route, navigation}) {
       modified.rotationAngle = 0
     else
       modified.rotationAngle += 90
-    updateTile(modified)
     updateTile(modified)
   }
 
@@ -267,7 +294,7 @@ export default function Board({route, navigation}) {
   function AfterDiceActions(dice) {
     switch(state.value){
       case "checkTraps":
-        if (dice === 1) {
+        if (dice) {
           send("EXIST")
           setModalOption("nextState")
           setModalVisible(true)
@@ -297,28 +324,34 @@ export default function Board({route, navigation}) {
           setModalVisible(true)
           break;
       case "doAction":
-          let mod_board = JSON.parse(JSON.stringify(boardMap))
+          let mod_board = JSON.parse(JSON.stringify(boardMap));
           switch (trapType){
               case "Arrows":
-                  let damage_1 = battleResult(dice, "Bow")
-                  mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_1
+                  let damage_1 = battleResult(dice, "Bow");
+                  mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_1;
+                  changeBoardMap(mod_board);
                   break;
               case "Poison Arrows":
-                  let damage_2 = battleResult(dice[0], "Bow") + halfDiceRoll(dice[1])
-                  mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_2
+                  let damage_2 = battleResult(dice[0], "Bow") + halfDiceRoll(dice[1]);
+                  mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_2;
+                  changeBoardMap(mod_board);
                   break;
               case "Poison Gas":
-                  let damage_3 = battleResult(halfDiceRoll(dice), "Bow")
-                  mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_3
+                  let damage_3 = halfDiceRoll(dice);
+                  mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_3;
+                  changeBoardMap(mod_board);
                   break;
               case "Explosion":
-                  for (let i = 0; i < boardMap[currentIndex].squad.squad.length; i++){
+                  for (let i = 0; i < mod_board[currentIndex].squad.squad.length; i++){
                       if(mod_board[currentIndex].squad.squad[i].Name !== undefined)
-                          mod_board[currentIndex].squad.squad[i].WP = mod_board[currentIndex].squad.squad[i].WP - 1
+                          mod_board[currentIndex].squad.squad[i].WP = mod_board[currentIndex].squad.squad[i].WP - 1;
                   }
+                  changeBoardMap(mod_board)
                   break;
           }
-          changeBoardMap(mod_board)
+          navigation.setParams({
+              squad: mod_board[currentIndex].squad.squad
+          })
           setModalOption("nextState")
           setModalVisible(false)
           send("NEXT")
@@ -331,7 +364,11 @@ export default function Board({route, navigation}) {
             send("EXIST")
             navigation.navigate({
               name: "Battle",
-              params: boardMap[currentIndex].squad
+              params: {
+                  squad: boardMap[currentIndex].squad.squad,
+                  money: boardMap[currentIndex].squad.money,
+                  XP: boardMap[currentIndex].squad.XP
+              }
             })
           }
           else
@@ -341,7 +378,11 @@ export default function Board({route, navigation}) {
             send("EXIST")
             navigation.navigate({
               name: "Battle",
-              params: boardMap[currentIndex].squad
+              params: {
+                  squad: boardMap[currentIndex].squad.squad,
+                  money: boardMap[currentIndex].squad.money,
+                  XP: boardMap[currentIndex].squad.XP
+              }
             })
           }
           else

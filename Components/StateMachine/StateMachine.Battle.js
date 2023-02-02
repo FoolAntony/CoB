@@ -90,13 +90,18 @@ export const battleMachine = createMachine({
     heroesTurn: {
       on: {
         FINISH: "monstersTurn",
-        DONE: "endSession"
+        DONE: "getTreasures"
       }
     },
     monstersTurn: {
       on: {
         FINISH: "heroesTurn",
         DONE: "endSession"
+      }
+    },
+    getTreasures: {
+      on: {
+        NEXT: "endSession"
       }
     },
     endSession: {

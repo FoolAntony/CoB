@@ -19,6 +19,8 @@ const MonsterSet = [ {} , {} , {} ,
 
 let multipleDices = Array(3)
 
+let total_WP = 0;
+
 let amount = 0;
 
 let brib = 0
@@ -50,7 +52,8 @@ function areEqual(array1, array2) {
 
 export default function Battlefield({route, navigation}) {
   const [money, updateMoney] = useState(route.params.money)
-  const [team, updateTeam] = useState(route.params.squad)
+  const [team, updateTeam] = useState(route.params.squad);
+  const [xp, updateXP] = useState(route.params.XP)
   const [state, send] = useMachine(battleMachine)
   const [monsters, updateMonsters] = useState(MonsterSet)
   const [modalVisible, setModalVisible] = useState(false);
@@ -152,6 +155,7 @@ export default function Battlefield({route, navigation}) {
                   amount = 0
               }
               getMonsterHP(uptMonsters[index], dice);
+              total_WP += uptMonsters[index].WP
               updateMonsters(uptMonsters)
               break;
           case "doNegotiation":
@@ -184,15 +188,22 @@ export default function Battlefield({route, navigation}) {
               }
               break;
           case "heroesTurn":
-              let damage = battleResult(((member.CB !== null ? member.CB : 0) + dice + (member.WS !== null ? (member.WS[0] === chosenWeapon ? member.WS[1] : 0) : 0)), chosenWeapon)
+              let damage = 0
+              if(chosenWeapon !== null) {
+                  damage = battleResult(((member.CB !== null ? member.CB : 0) + dice + (member.WS !== null ? (member.WS[0] === chosenWeapon ? member.WS[1] : 0) : 0)), chosenWeapon)
+              } else if (chosenSpell !== null){
+
+              }
               monster.WP = monster.WP - damage;
               usedMembers[turn_index] = member;
+              setChosenWeapon(null)
+              setChosenSpell(null)
+              showMember({})
+              updateDice(null)
               if (SquadIsOver(monsters) === true) {
                   setModalVisible(false)
-                  showMember({})
                   usedMembers = Array(9).fill({})
                   turn_index = 0
-                  updateDice(null)
                   placeMonsters({monster: {}, amount: 9})
                   send("DONE")
               } else if (SquadIsOver(monsters) === false) {
@@ -201,10 +212,9 @@ export default function Battlefield({route, navigation}) {
                       usedMembers = Array(9).fill({})
                       turn_index = 0
                       setModalOption("showMonsterInfo")
-                      showMember({})
+
                   } else if (areEqual(team, usedMembers) === false) {
                       setModalOption("showMonsterInfo")
-                      showMember({})
                       turn_index += 1
                   }
               }
@@ -232,6 +242,10 @@ export default function Battlefield({route, navigation}) {
                   usedMembers[turn_index] = monster;
                   if (SquadIsOver(team) === true) {
                       send("DONE")
+                      updateXP(total_WP * 6)
+                      navigation.setParams({
+                          XP: total_WP * 6
+                      })
                       setModalVisible(false)
                   } else if (areEqual(monsters, usedMembers) === true) {
                       send("FINISH")
@@ -262,8 +276,10 @@ export default function Battlefield({route, navigation}) {
 
   const placeMonsters = (item) => {
       for (let i = 8; i > 8 - item.amount; i--) {
-                  uptMonsters[i] = JSON.parse(JSON.stringify(item.monster))
-              }
+          uptMonsters[i] = JSON.parse(JSON.stringify(item.monster))
+          if(state.value === "monstersAmount")
+              uptMonsters[i].id = i
+      }
       updateMonsters(uptMonsters)
   }
 
@@ -487,7 +503,11 @@ export default function Battlefield({route, navigation}) {
                       <View style={{width:125}}>
                           <TouchableOpacity
                               onPress={() => {
-                                  setModalOption("UseSpell")
+                                  if(member.Spells.length !== 0) {
+                                      setModalOption("UseSpell")
+                                  } else {
+                                      Alert.alert("This hero cannot cast any spell, choose another option!")
+                                  }
                               }}
                           >
                               <View style={[styles.button, {backgroundColor: "tomato", width:100}]}>
@@ -659,14 +679,15 @@ export default function Battlefield({route, navigation}) {
                   <View style={styles.modalView}>
                     <Text>Choose {member.Name}'s Weapon to use!</Text>
                       <FlatList data={member.Weapon}
+                                scrollEnabled={false}
                                 renderItem={({item, index}) => (
                           <TouchableOpacity onPress={() => {
                               Dice()
                               setChosenWeapon(item)
                           }}>
-                            <View style={[styles.buttonClose]}>
-                              <Text style={styles.textButton}>{item}</Text>
-                            </View>
+                              <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
+                                  <Text style={styles.textStyle}>{item}</Text>
+                              </View>
                           </TouchableOpacity>
                     )}/>
                   </View>
@@ -687,10 +708,21 @@ export default function Battlefield({route, navigation}) {
               >
                 <View style={styles.centeredView}>
                   <View style={styles.modalView}>
-                    <NextStateTemplate/>
-                    <ModalButton/>
+                     <Text>Choose {member.Name}'s Spell to use!</Text>
+                      <FlatList data={member.Spells}
+                                scrollEnabled={false}
+                                renderItem={({item, index}) => (
+                          <TouchableOpacity onPress={() => {
+                              Dice()
+                              setChosenSpell(item)
+                          }}>
+                           <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
+                                  <Text style={styles.textStyle}>{item}</Text>
+                           </View>
+                          </TouchableOpacity>
+                    )}/>
                   </View>
-                </View>
+                  </View>
               </Modal>
         );
     }
@@ -828,27 +860,42 @@ export default function Battlefield({route, navigation}) {
                           }
                       });
                     }}>
-                        <Text style={[styles.textButton, {color: "black"}]}>End Session!</Text>
+                        <Text style={[styles.textButton, {backgroundColor: "blue"}]}>End Session!</Text>
                     </TouchableOpacity>
                 </View>
             )
     }
   }
 
+  useEffect(() => {
+        console.log(xp)
+  }, [xp])
 
   useEffect(() => {
-    updateTeam(CompleteSquad.squad);
+        console.log(money)
+  }, [money])
+
+
+  useEffect(() => {
     console.log(state.value);
     console.log(usedMembers);
     console.log(turn_index);
-    console.log(team)
-  }, [CompleteSquad, state, uptMonsters, usedMembers, turn_index, team])
+    console.log(team);
+    if(route.params?.squad)
+        updateTeam(route.params.squad)
+    if(route.params?.money)
+        updateMoney(route.params.money)
+    if(route.params?.XP)
+        updateXP(route.params.XP)
+  }, [route.params?.money, route.params?.squad, route.params?.XP, state, uptMonsters, usedMembers, turn_index, team])
 
 
   return (
-    <View style={styles.container}>
-      <View style={{paddingBottom:10}}>
-        <Text style={styles.textHeader}>FIGHT!</Text>
+    <View style={[styles.container]}>
+      <View style={{paddingBottom:10, paddingTop: 10, flexDirection:"row"}}>
+        <Text style={[styles.textHeader, {flex:1, alignSelf: 'flex-start'}]}>Money:{JSON.stringify(money)}</Text>
+        <Text style={[styles.textHeader, {flex:1, alignSelf: 'center'}]}>FIGHT!</Text>
+        <Text style={[styles.textHeader, {alignSelf: 'flex-end'}]}>XP:{JSON.stringify(xp)}</Text>
       </View>
       <MonstersField/>
       <ModalScreen/>
@@ -863,7 +910,6 @@ export default function Battlefield({route, navigation}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent:"center",
     alignItems:"center"
   },
     textButton: {
@@ -946,6 +992,5 @@ const styles = StyleSheet.create({
   },
   textHeader: {
     fontSize:22,
-    alignSelf:"center"
   },
 });
