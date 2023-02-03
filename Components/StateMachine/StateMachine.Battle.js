@@ -90,7 +90,7 @@ export const battleMachine = createMachine({
     heroesTurn: {
       on: {
         FINISH: "monstersTurn",
-        DONE: "getTreasures"
+        DONE: "getGold"
       }
     },
     monstersTurn: {
@@ -99,9 +99,39 @@ export const battleMachine = createMachine({
         DONE: "endSession"
       }
     },
-    getTreasures: {
+    getGold: {
       on: {
-        NEXT: "endSession"
+        EXIST: "findGold",
+        NEXT: "getJewelry"
+      }
+    },
+    findGold:{
+      on:{
+        NEXT: "getJewelry"
+      }
+    },
+    getJewelry: {
+      on:{
+        EXIST: "findJewelry",
+        NEXT: "getMagicItem"
+      }
+    },
+    findJewelry:{
+      on:{
+        NEXT: "getMagicItem"
+      }
+    },
+    getMagicItem:{
+      on:{
+        EXIST: "findMagicItem",
+        DONE: "endSession",
+        NEXT: "getGold"
+      }
+    },
+    findMagicItem:{
+      on:{
+        DONE: "endSession",
+        NEXT: "getGold"
       }
     },
     endSession: {

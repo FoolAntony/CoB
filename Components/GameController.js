@@ -88,6 +88,50 @@ export const briberyTable = [
     [6, 6, 6, 5, 5, 4]
 ]
 
+export const treasureGoldTable = [
+    [0,0],
+    [6,1],
+    [6,1],
+    [1,1],
+    [2,10],
+    [3,5],
+    [6,5],
+    [6,1],
+    [6,5],
+    [6,20],
+    [6,20],
+    [6,20]
+]
+
+export const treasureJewelryTable = [
+    [0,0],
+    [0,0],
+    [0,0],
+    [1,1],
+    [2,2],
+    [3,1],
+    [3,2],
+    [1,1],
+    [2,2],
+    [3,2],
+    [4,2]
+]
+
+export const treasureMagicItemTable = [
+    [0,0],
+    [0,0],
+    [1,1],
+    [0,0],
+    [2,1],
+    [1,1],
+    [2,1],
+    [1,1],
+    [2,1],
+    [3,2],
+    [3,2],
+    [4,2]
+]
+
 export const magicItemsTable = [
     ["Sword", "Hammer", "Axe", "Bow", "Dagger", "T-Dagger"],
     [1,1,1,2,2,"Throw twice"],
@@ -365,11 +409,11 @@ export function weaponBonus(d) {
   return bonus;
 }
 
-let jew_table = [1, 5, 10, 15, 20, 25, 35, 50, 75, 100, 150];
+let jewelry_table = [1, 5, 10, 15, 20, 25, 35, 50, 75, 100, 150];
 
-export function jewelryTable(dice) {
-  let i = dice - 2;
-  return jew_table[i];
+export function jewelryTable(res) {
+  let i = res - 2;
+  return jewelry_table[i];
 }
 
 export function getMagicItem(d1, d2) {
@@ -377,6 +421,7 @@ export function getMagicItem(d1, d2) {
   let j = d2 - 1
   return magicItemsTable[i][j]
 }
+
 
 export function getMonsterHP(item, dice){
   if (Array.isArray(dice) === false){

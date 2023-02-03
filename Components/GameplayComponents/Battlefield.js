@@ -7,7 +7,7 @@ import {
     getMonsterHP,
     monsterType,
     negotiation,
-    rollDice
+    rollDice, treasureGoldTable
 } from "../GameController";
 import {CompleteSquad} from "./Squad";
 import {useMachine} from "@xstate/react";
@@ -128,7 +128,9 @@ export default function Battlefield({route, navigation}) {
          setModalOption("nextState");
          setModalVisible(true);
          break;
-
+      case "getTreasures":
+         setModalVisible(true)
+         setModalOption("nextState")
     }
 };
 
@@ -260,6 +262,44 @@ export default function Battlefield({route, navigation}) {
                   }
               }
               break;
+          case "getGold":
+              if(treasureGoldTable[monsters[8].Treasure[0]][0] <= dice)
+                  send("EXIST")
+              else
+                  send("NEXT")
+              break;
+          case "findGold":
+              let mult = treasureGoldTable[monsters[8].Treasure[0]][1]
+              switch(monsters[8].Treasure[0]){
+                  default:
+                      let res = money;
+                      res += dice * mult
+                      updateMoney(res)
+                      navigation.setParams({
+                          money: res
+                      })
+                      break;
+                  case 3:
+                  case 6:
+                  case 11:
+                      let res_3 = money;
+                      res_3 += (dice[0] + dice[1] + dice[2]) * mult
+                      updateMoney(res_3)
+                      navigation.setParams({
+                          money: res_3
+                      })
+                      break;
+                  case 7:
+                  case 10:
+                      let res_2 = money;
+                      res_2 += (dice[0] + dice[1]) * mult
+                      updateMoney(res_2)
+                      navigation.setParams({
+                          money: res_2
+                      })
+                      break;
+              }
+              send("NEXT")
       }
   }
 
@@ -373,6 +413,24 @@ export default function Battlefield({route, navigation}) {
               return(
                   <View>
                       <Text style={styles.modalText}>{turn_index + 1} {monster.Name} {member.Name !== undefined ? " is going to hit " + member.Name : " is looking for a target!" + "\n" + "Find who will be chosen!"}</Text>
+                  </View>
+              )
+          case "getGold":
+              return(
+                  <View>
+                      <Text style={styles.modalText}>Check if there is gold with {turn_index + 1} {monsters[8].Name}</Text>
+                  </View>
+              )
+          case "getJewelry":
+              return(
+                  <View>
+                      <Text style={styles.modalText}>Check if there are any jewelries with {turn_index + 1} {monsters[8].Name}</Text>
+                  </View>
+              )
+          case "getMagicItem":
+              return(
+                  <View>
+                      <Text style={styles.modalText}>Check if there are any Magic Items with {turn_index + 1} {monsters[8].Name}</Text>
                   </View>
               )
       }
@@ -845,6 +903,14 @@ export default function Battlefield({route, navigation}) {
                 </View>
               </TouchableOpacity>
           )
+        case "getTreasures":
+            return (
+                <TouchableOpacity onPress={ActionStates}>
+                    <View style={styles.textButtonContainer}>
+                      <Text style={styles.textButton}>Find Treasures!</Text>
+                    </View>
+                </TouchableOpacity>
+            )
         case "endSession":
             return(
                 <View style={[styles.textButtonContainer, {backgroundColor: null, width: 300}]}>

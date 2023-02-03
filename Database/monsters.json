@@ -8,7 +8,7 @@
     "NV": 7,
     "Weapon": null,
     "Spells": null,
-    "Treasure":["I"],
+    "Treasure":[8],
     "Special": "Firebreath"
   },
   {
@@ -20,7 +20,7 @@
     "NV": 9,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["E","B"],
+    "Treasure": [4,1],
     "Special": "Stench"
   },
   {
@@ -32,7 +32,7 @@
     "NV": null,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["D"],
+    "Treasure": [3],
     "Special": ""
   },
   {
@@ -44,7 +44,7 @@
     "NV": 9,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["A"],
+    "Treasure": [0],
     "Special": []
   },
   {
@@ -56,7 +56,7 @@
     "NV": 5,
     "Weapon": "Sword",
     "Spells": null,
-    "Treasure": ["J","C"],
+    "Treasure": [9,2],
     "Special": []
   },
   {
@@ -68,7 +68,7 @@
     "NV": 3,
     "Weapon": "Dagger",
     "Spells": "Lightning",
-    "Treasure": ["J","C"],
+    "Treasure": [9,2],
     "Special": []
   },
   {
@@ -80,7 +80,7 @@
     "NV": 4,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["G"],
+    "Treasure": [6],
     "Special": []
   },
   {
@@ -92,7 +92,7 @@
     "NV": 5,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["A"],
+    "Treasure": [0],
     "Special": []
   },
   {
@@ -104,7 +104,7 @@
     "NV": 7,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["J"],
+    "Treasure": [9],
     "Special": []
   },
   {
@@ -116,7 +116,7 @@
     "NV": 5,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["G"],
+    "Treasure": [6],
     "Special": ["Flesh", "Stone"]
   },
   {
@@ -128,7 +128,7 @@
     "NV": 7,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["J", "C"],
+    "Treasure": [9, 2],
     "Special": []
   },
   {
@@ -140,7 +140,7 @@
     "NV": 2,
     "Weapon": "Hammer",
     "Spells": null,
-    "Treasure": ["J", "E"],
+    "Treasure": [9, 4],
     "Special": []
   },
   {
@@ -152,7 +152,7 @@
     "NV": 0,
     "Weapon": "Sword",
     "Spells": null,
-    "Treasure": ["H", "B"],
+    "Treasure": [7, 1],
     "Special": []
   },
   {
@@ -164,7 +164,7 @@
     "NV": 9,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["F","A"],
+    "Treasure": [5,0],
     "Special": []
   },
   {
@@ -176,7 +176,7 @@
     "NV": 4,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["J"],
+    "Treasure": [9],
     "Special": "Regenerate"
   },
   {
@@ -188,7 +188,7 @@
     "NV": 6,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["J"],
+    "Treasure": [9],
     "Special": "Charm"
   },
   {
@@ -200,7 +200,7 @@
     "NV": 6,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["A"],
+    "Treasure": [9],
     "Special": []
   },
   {
@@ -212,7 +212,7 @@
     "NV": 4,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["H"],
+    "Treasure": [7],
     "Special": []
   },
   {
@@ -224,7 +224,7 @@
     "NV": 2,
     "Weapon": null,
     "Spells": null,
-    "Treasure": ["I", "D"],
+    "Treasure": [8, 3],
     "Special": []
   },
   {
@@ -236,7 +236,7 @@
     "NV": null,
     "Weapon": "Sword",
     "Spells": "Lightning",
-    "Treasure": ["L"],
+    "Treasure": [11],
     "Special": []
   }
 ]
