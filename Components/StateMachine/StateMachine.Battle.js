@@ -118,6 +118,12 @@ export const battleMachine = createMachine({
     },
     findJewelry:{
       on:{
+        NEXT: "assignJewelry"
+      }
+    },
+    assignJewelry:{
+      on:{
+        REPEAT: "findJewelry",
         NEXT: "getMagicItem"
       }
     },
@@ -130,7 +136,13 @@ export const battleMachine = createMachine({
     },
     findMagicItem:{
       on:{
+        NEXT: "assignMagicItem"
+      }
+    },
+    assignMagicItem:{
+      on:{
         DONE: "endSession",
+        REPEAT: "findMagicItem",
         NEXT: "getGold"
       }
     },

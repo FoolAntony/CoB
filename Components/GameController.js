@@ -417,9 +417,30 @@ export function jewelryTable(res) {
 }
 
 export function getMagicItem(d1, d2) {
-  let i = d1 - 1
+  let i = d1 - 1;
+  let item_type = ""
+  switch (d1){
+      case 1:
+          item_type = "Weapon"
+          break;
+      case 2:
+          item_type = "Armor"
+          break;
+      case 3:
+          item_type = "Potion"
+          break;
+      case 4:
+          item_type = "Talisman"
+          break;
+      case 5:
+          item_type = "Medallion"
+          break;
+      case 6:
+          item_type = "Ring"
+
+  }
   let j = d2 - 1
-  return magicItemsTable[i][j]
+  return {type: item_type, effect: magicItemsTable[i][j]}
 }
 
 

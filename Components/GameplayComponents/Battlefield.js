@@ -3,11 +3,11 @@ import {Alert, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View,} from 
 import {
     battleResult,
     briberyMoneySet,
-    briberyResult,
-    getMonsterHP,
+    briberyResult, getMagicItem,
+    getMonsterHP, halfDiceRoll, jewelryTable,
     monsterType,
     negotiation,
-    rollDice, treasureGoldTable
+    rollDice, treasureGoldTable, treasureJewelryTable, treasureMagicItemTable
 } from "../GameController";
 import {CompleteSquad} from "./Squad";
 import {useMachine} from "@xstate/react";
@@ -28,6 +28,10 @@ let brib = 0
 let turn_index = 0
 
 let usedMembers = Array(9).fill({})
+
+let jewelry_amount = 0
+
+let magicItemsAmount = 0
 
 
   function SquadIsOver(arr) {
@@ -63,6 +67,8 @@ export default function Battlefield({route, navigation}) {
   const [dice, updateDice] = useState(null);
   const [chosenWeapon, setChosenWeapon] = useState(null);
   const [chosenSpell, setChosenSpell] = useState(null);
+  const [jewelryCost, updateJewelryCost] = useState(null);
+  const [magicItem, updateMagicItem] = useState({})
 
 
 
@@ -94,6 +100,22 @@ export default function Battlefield({route, navigation}) {
                   Alert.alert("Player pressed on empty space or hero must be already chosen!")
               }
               break;
+          case "assignJewelry":
+              if(member.Name !== undefined){
+                  setModalOption("nextState")
+                  setModalVisible(true)
+                  showMember(member)
+              } else
+                  Alert.alert("Please, choose the place where the hero exist!")
+              break;
+          case "assignMagicItem":
+              if(member.Name !== undefined){
+                  setModalOption("nextState")
+                  setModalVisible(true)
+                  showMember(member)
+              } else
+                  Alert.alert("Please, choose the place where the hero exist!")
+              break;
       }
   }
 
@@ -123,12 +145,22 @@ export default function Battlefield({route, navigation}) {
         setModalVisible(true)
         break;
       case "doFight":
-      case "monstersTurn":
          showMonster(monsters[8])
          setModalOption("nextState");
          setModalVisible(true);
          break;
-      case "getTreasures":
+      case "monstersTurn":
+          if(monsters[8 - turn_index].WP <= 0) {
+              do {
+                  turn_index += 1
+                  usedMembers[turn_index - 1] = monsters[8 - turn_index + 1]
+              } while (monsters[8 - turn_index].WP <= 0)
+          }
+         showMonster(monsters[8])
+         setModalOption("nextState");
+         setModalVisible(true);
+         break;
+      case "getGold":
          setModalVisible(true)
          setModalOption("nextState")
     }
@@ -196,7 +228,8 @@ export default function Battlefield({route, navigation}) {
               } else if (chosenSpell !== null){
 
               }
-              monster.WP = monster.WP - damage;
+              // monster.WP = monster.WP - damage;
+              monster.WP = 0
               usedMembers[turn_index] = member;
               setChosenWeapon(null)
               setChosenSpell(null)
@@ -206,7 +239,11 @@ export default function Battlefield({route, navigation}) {
                   setModalVisible(false)
                   usedMembers = Array(9).fill({})
                   turn_index = 0
-                  placeMonsters({monster: {}, amount: 9})
+                  updateXP(total_WP * 6)
+                  navigation.setParams({
+                      XP: total_WP * 6
+                  })
+                  // placeMonsters({monster: {}, amount: 9})
                   send("DONE")
               } else if (SquadIsOver(monsters) === false) {
                   if (areEqual(team, usedMembers) === true) {
@@ -242,12 +279,15 @@ export default function Battlefield({route, navigation}) {
                   let m_damage = battleResult((monster.CB + dice), monster.Weapon ? monster.Weapon : "Monster")
                   member.WP = member.WP - m_damage;
                   usedMembers[turn_index] = monster;
+                  if(monsters[8 - turn_index - 1].WP <= 0) {
+                      do {
+                          turn_index += 1
+                          usedMembers[turn_index] = monsters[8 - turn_index]
+                      } while (monsters[8 - turn_index - 1].WP <= 0 && turn_index <= 8)
+                      turn_index -= 1
+                  }
                   if (SquadIsOver(team) === true) {
                       send("DONE")
-                      updateXP(total_WP * 6)
-                      navigation.setParams({
-                          XP: total_WP * 6
-                      })
                       setModalVisible(false)
                   } else if (areEqual(monsters, usedMembers) === true) {
                       send("FINISH")
@@ -263,10 +303,11 @@ export default function Battlefield({route, navigation}) {
               }
               break;
           case "getGold":
-              if(treasureGoldTable[monsters[8].Treasure[0]][0] <= dice)
+              if(treasureGoldTable[monsters[8].Treasure[0]][0] >= dice)
                   send("EXIST")
               else
                   send("NEXT")
+              setModalOption("nextState")
               break;
           case "findGold":
               let mult = treasureGoldTable[monsters[8].Treasure[0]][1]
@@ -300,6 +341,54 @@ export default function Battlefield({route, navigation}) {
                       break;
               }
               send("NEXT")
+              setModalOption("nextState")
+              break;
+          case "getJewelry":
+              if(treasureJewelryTable[monsters[8].Treasure[0]][0] >= dice)
+                  send("EXIST")
+              else
+                  send("NEXT")
+              setModalOption("nextState")
+              break;
+          case "findJewelry":
+              if (jewelry_amount === 0)
+                  jewelry_amount = dice;
+              else {
+                  updateJewelryCost(jewelryTable(dice[0] + dice[1]))
+                  send("NEXT")
+                  setModalVisible(false)
+              }
+              setModalOption("nextState")
+              break;
+          case "getMagicItem":
+              if(treasureMagicItemTable[monsters[8].Treasure[0]][0] >= dice)
+                  send("EXIST")
+              else {
+                  if(monsters[8 - turn_index - 1].Name !== undefined) {
+                      send("NEXT")
+                      turn_index += 1
+                  }
+                  else {
+                      setModalVisible(false)
+                      send("DONE")
+                      turn_index = 0
+                  }
+              }
+              setModalOption("nextState")
+              break;
+          case "findMagicItem":
+              if (magicItemsAmount === 0)
+                  if(monsters[8].Treasure[0] !== 11 && monsters[8].Treasure[0] !== 10 && monsters[8].Treasure[0] !== 9)
+                      magicItemsAmount = 1
+                  else
+                      magicItemsAmount = halfDiceRoll(dice)
+              else {
+                  updateMagicItem(getMagicItem(dice[0], dice[1]))
+                  send("NEXT")
+                  setModalVisible(false)
+              }
+              setModalOption("nextState")
+              break;
       }
   }
 
@@ -421,16 +510,51 @@ export default function Battlefield({route, navigation}) {
                       <Text style={styles.modalText}>Check if there is gold with {turn_index + 1} {monsters[8].Name}</Text>
                   </View>
               )
+          case "findGold":
+              return(
+                  <View>
+                      <Text style={styles.modalText}>Check how much gold {turn_index + 1} {monsters[8].Name} has! </Text>
+                  </View>
+              )
           case "getJewelry":
               return(
                   <View>
                       <Text style={styles.modalText}>Check if there are any jewelries with {turn_index + 1} {monsters[8].Name}</Text>
                   </View>
               )
+          case "findJewelry":
+              return(
+                  <View>
+                      <Text style={styles.modalText}>{jewelry_amount === 0 ? "Check how many jewelries founded!" : "Check the price of found jewelries!"}</Text>
+                  </View>
+              )
+          case "assignJewelry":
+              let member_wallet = member.Treasure.reduce((a, b) => a + b, 0)
+              return(
+                  <View>
+                      <Text style={styles.modalText}>{member.Name} will get this jewelry!</Text>
+                      <Text style={styles.modalText}>Their sum of current jewelries cost equals {JSON.stringify(member_wallet)}.</Text>
+                      <Text style={styles.modalText}>Found jewelry costs {jewelryCost} golds.</Text>
+                      <Text style={styles.modalText}>Do you accept it?</Text>
+                  </View>
+              )
           case "getMagicItem":
               return(
                   <View>
                       <Text style={styles.modalText}>Check if there are any Magic Items with {turn_index + 1} {monsters[8].Name}</Text>
+                  </View>
+              )
+          case "findMagicItem":
+              return(
+                  <View>
+                      <Text style={styles.modalText}>Check what kind of Magic Item that is!</Text>
+                  </View>
+              )
+          case "assignMagicItem":
+              return(
+                  <View>
+                      <Text style={styles.modalText}>{member.Name} will get {magicItem.type} of {magicItem.effect}!</Text>
+                      <Text style={styles.modalText}>Do you accept it?</Text>
                   </View>
               )
       }
@@ -461,6 +585,7 @@ export default function Battlefield({route, navigation}) {
                       d[0] = rollDice()
                       d[1] = rollDice()
                       updateDice(d)
+                      d = []
                       break;
                   case "Gargoyle":
                       setModalOption("DiceRoll");
@@ -469,12 +594,63 @@ export default function Battlefield({route, navigation}) {
                       dg[1] = rollDice()
                       dg[2] = rollDice()
                       updateDice(dg)
+                      dg = []
                       break;
                   default:
                       setModalOption("DiceRoll");
                       updateDice(rollDice())
                       break;
               }
+              break;
+          case "findGold":
+              switch(monsters[8].Treasure[0]) {
+                  default:
+                      updateDice(rollDice())
+                      break;
+                  case 3:
+                  case 6:
+                  case 11:
+                      let arr_dice = []
+                      arr_dice[0] = rollDice()
+                      arr_dice[1] = rollDice()
+                      arr_dice[2] = rollDice()
+                      updateDice(arr_dice)
+                      arr_dice = []
+                      break;
+                  case 7:
+                  case 10:
+                      let arrdice = []
+                      arrdice[0] = rollDice()
+                      arrdice[1] = rollDice()
+                      updateDice(arrdice)
+                      arrdice = []
+                      break;
+              }
+              setModalOption("DiceRoll")
+              break;
+          case "findJewelry":
+              if (jewelry_amount === 0)
+                  updateDice(rollDice())
+              else{
+                  let jwl_d = []
+                  jwl_d[0] = rollDice()
+                  jwl_d[1] = rollDice()
+                  updateDice(jwl_d)
+                  jwl_d = []
+              }
+              setModalOption("DiceRoll");
+              break;
+          case "findMagicItem":
+              if (magicItemsAmount === 0)
+                  updateDice(rollDice())
+              else{
+                  let magicItemArr = []
+                  magicItemArr[0] = rollDice()
+                  magicItemArr[1] = rollDice()
+                  updateDice(magicItemArr)
+                  magicItemArr = []
+              }
+              setModalOption("DiceRoll");
               break;
           default:
               setModalOption("DiceRoll");
@@ -582,6 +758,81 @@ export default function Battlefield({route, navigation}) {
                           >
                               <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
                                   <Text style={styles.textStyle}>Use Weapons!</Text>
+                              </View>
+                          </TouchableOpacity>
+                      </View>
+                  </View>
+              )
+          case "assignJewelry":
+              return(
+                  <View style={{flexDirection:"row", paddingHorizontal:5}}>
+                      <View style={{width:125}}>
+                          <TouchableOpacity
+                              onPress={() => {
+                                  setModalVisible(false)
+                              }}
+                          >
+                              <View style={[styles.button, {backgroundColor: "tomato", width:100}]}>
+                                  <Text style={styles.textStyle}>No</Text>
+                              </View>
+
+                          </TouchableOpacity>
+                      </View>
+                      <View style={{width:125}}>
+                          <TouchableOpacity
+                            onPress={() => {
+                                member.Treasure.push(jewelryCost)
+                                jewelry_amount -= 1
+                                setModalOption("nextState")
+                                if(jewelry_amount > 0)
+                                    send("REPEAT")
+                                else
+                                    send("NEXT")
+                            }}
+                          >
+                              <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
+                                  <Text style={styles.textStyle}>Yes</Text>
+                              </View>
+                          </TouchableOpacity>
+                      </View>
+                  </View>
+              )
+          case "assignMagicItem":
+              return(
+                  <View style={{flexDirection:"row", paddingHorizontal:5}}>
+                      <View style={{width:125}}>
+                          <TouchableOpacity
+                              onPress={() => {
+                                  setModalVisible(false)
+                              }}
+                          >
+                              <View style={[styles.button, {backgroundColor: "tomato", width:100}]}>
+                                  <Text style={styles.textStyle}>No</Text>
+                              </View>
+
+                          </TouchableOpacity>
+                      </View>
+                      <View style={{width:125}}>
+                          <TouchableOpacity
+                            onPress={() => {
+                                member.Inventory.push(magicItem)
+                                magicItemsAmount -= 1
+                                setModalOption("nextState")
+                                if(magicItemsAmount > 0)
+                                    send("REPEAT")
+                                else if (monsters[8 - turn_index - 1].Name !== undefined) {
+                                    turn_index += 1
+                                    send("NEXT")
+                                }
+                                else {
+                                    turn_index = 0
+                                    setModalVisible(false)
+                                    send("DONE")
+                                }
+                            }}
+                          >
+                              <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
+                                  <Text style={styles.textStyle}>Yes</Text>
                               </View>
                           </TouchableOpacity>
                       </View>
@@ -704,24 +955,6 @@ export default function Battlefield({route, navigation}) {
                 </View>
               </Modal>
         );
-        case "Message":
-            return(
-                <Modal
-                  animationType="fade"
-                  transparent={true}
-                  visible={modalVisible}
-                  onRequestClose={() => {
-                    console.log("Modal has been closed.");
-                    setModalVisible(() => false);
-                  }}
-              >
-                <View style={styles.centeredView}>
-                  <View style={styles.modalView}>
-                    <ModalMessage/>
-                  </View>
-                </View>
-              </Modal>
-            )
         case "UseWeapon":
             return(
             <Modal
@@ -903,7 +1136,7 @@ export default function Battlefield({route, navigation}) {
                 </View>
               </TouchableOpacity>
           )
-        case "getTreasures":
+        case "getGold":
             return (
                 <TouchableOpacity onPress={ActionStates}>
                     <View style={styles.textButtonContainer}>
@@ -911,9 +1144,24 @@ export default function Battlefield({route, navigation}) {
                     </View>
                 </TouchableOpacity>
             )
+        case "assignJewelry":
+            return (
+                <View style={[styles.textButtonContainer, {backgroundColor: null, width: 300}]}>
+                  <Text style={[styles.textButton, {color: "black"}]}>Choose who will get the treasure!</Text>
+                  <Text style={[styles.textButton, {color: "black"}]}>(Remaining treasures: {jewelry_amount})</Text>
+                </View>
+            )
+        case "assignMagicItem":
+            return (
+                <View style={[styles.textButtonContainer, {backgroundColor: null, width: 300}]}>
+                  <Text style={[styles.textButton, {color: "black"}]}>Choose who will get the</Text>
+                  <Text style={[styles.textButton, {color: "black"}]}>{magicItem.type} of {magicItem.effect}</Text>
+                  <Text style={[styles.textButton, {color: "black"}]}>(Remaining magic items: {magicItemsAmount})</Text>
+                </View>
+            )
         case "endSession":
             return(
-                <View style={[styles.textButtonContainer, {backgroundColor: null, width: 300}]}>
+                <View style={{width: 300}}>
                     <Text style={[styles.textButton, {color: "black"}]}>Fight Completed!</Text>
                     <TouchableOpacity onPress={() => {
                          navigation.navigate({
@@ -921,12 +1169,14 @@ export default function Battlefield({route, navigation}) {
                           params: {
                               level: 1,
                               squad: team,
-                              money: 0,
-                              XP: 0
+                              money: money,
+                              XP: xp
                           }
                       });
                     }}>
-                        <Text style={[styles.textButton, {backgroundColor: "blue"}]}>End Session!</Text>
+                        <View style={styles.textButtonContainer}>
+                            <Text style={styles.textButton}>End Session!</Text>
+                        </View>
                     </TouchableOpacity>
                 </View>
             )
@@ -941,9 +1191,12 @@ export default function Battlefield({route, navigation}) {
         console.log(money)
   }, [money])
 
+  useEffect(() => {
+        console.log(state.value)
+  }, [state.value])
+
 
   useEffect(() => {
-    console.log(state.value);
     console.log(usedMembers);
     console.log(turn_index);
     console.log(team);
@@ -953,7 +1206,7 @@ export default function Battlefield({route, navigation}) {
         updateMoney(route.params.money)
     if(route.params?.XP)
         updateXP(route.params.XP)
-  }, [route.params?.money, route.params?.squad, route.params?.XP, state, uptMonsters, usedMembers, turn_index, team])
+  }, [route.params?.money, route.params?.squad, route.params?.XP, uptMonsters, usedMembers, turn_index, team])
 
 
   return (
