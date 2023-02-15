@@ -137,7 +137,7 @@ export const magicItemsTable = [
     [1,1,1,2,2,"Throw twice"],
     ["Poison", "Power", "Power", "Charm Person", "Charm Monster", "Heal"],
     ["Wise", "Yellow Sun", "Blue Sun", "Red Sun", "All Suns", "Evil"],
-    ["Neutralize Poison", "Potion Check", "Oratory", "Neutralize Poison", "Asphyxiation"],
+    ["Neutralize Poison", "Potion Check", "Oratory", "Combat Bonus","Neutralize Poison", "Asphyxiation"],
     ["Resistance +1", "Resistance +2", "Dream", "Neutralize Poison", "Heal", "Resurrection"],
 ]
 
@@ -233,7 +233,13 @@ export function monsterWanderingType(d1,d2,dice){
   return {monster:monsterWanderingTable[i][j], amount: a};
 }
 
-export function battleResultNum(res){
+export function battleResultNum(item, dice, type){
+    let res = 0
+  if (item !== undefined)
+      res = (item.CB !== undefined ? (item.CB !== null ? item.CB : 0) : 0) + dice + (item.WS !== null ? (item.WS[0] === type ? item.WS[1] : 0) : 0) +
+        + (item.Inventory.includes((object) => (object.type === "Medallion" && object.effect === "Combat Bonus")) ? 2 : 0);
+  else
+      res = dice
   let index = 0
   switch (res){
     case 1:
@@ -326,8 +332,8 @@ export function battleResultType(type){
   return index
 }
 
-export function battleResult(res, type){
-  let i = battleResultNum(res);
+export function battleResult(item, dice, type){
+  let i = battleResultNum(item, dice, type);
   let j = battleResultType(type);
   return battleResultTable[i][j];
 }

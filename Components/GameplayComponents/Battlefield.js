@@ -4,10 +4,10 @@ import {
     battleResult,
     briberyMoneySet,
     briberyResult, getMagicItem,
-    getMonsterHP, halfDiceRoll, jewelryTable,
+    getMonsterHP, halfDiceRoll, jewelryTable, magicItemsTable,
     monsterType,
     negotiation,
-    rollDice, treasureGoldTable, treasureJewelryTable, treasureMagicItemTable
+    rollDice, treasureGoldTable, treasureJewelryTable, treasureMagicItemTable, weaponBonus
 } from "../GameController";
 import {CompleteSquad} from "./Squad";
 import {useMachine} from "@xstate/react";
@@ -68,7 +68,9 @@ export default function Battlefield({route, navigation}) {
   const [chosenWeapon, setChosenWeapon] = useState(null);
   const [chosenSpell, setChosenSpell] = useState(null);
   const [jewelryCost, updateJewelryCost] = useState(null);
-  const [magicItem, updateMagicItem] = useState({})
+  const [magicItem, updateMagicItem] = useState({});
+  const [numOfDices, changeNumOfDices] = useState(1);
+  const [receivedWeaponDamage, updateReceivedWeaponDamage] = useState(0)
 
 
 
@@ -224,7 +226,7 @@ export default function Battlefield({route, navigation}) {
           case "heroesTurn":
               let damage = 0
               if(chosenWeapon !== null) {
-                  damage = battleResult(((member.CB !== null ? member.CB : 0) + dice + (member.WS !== null ? (member.WS[0] === chosenWeapon ? member.WS[1] : 0) : 0)), chosenWeapon)
+                  damage = battleResult(member, dice, chosenWeapon)
               } else if (chosenSpell !== null){
 
               }
@@ -239,9 +241,9 @@ export default function Battlefield({route, navigation}) {
                   setModalVisible(false)
                   usedMembers = Array(9).fill({})
                   turn_index = 0
-                  updateXP(total_WP * 6)
+                  updateXP((xp) => xp + total_WP * 6)
                   navigation.setParams({
-                      XP: total_WP * 6
+                      XP: xp
                   })
                   // placeMonsters({monster: {}, amount: 9})
                   send("DONE")
@@ -313,30 +315,24 @@ export default function Battlefield({route, navigation}) {
               let mult = treasureGoldTable[monsters[8].Treasure[0]][1]
               switch(monsters[8].Treasure[0]){
                   default:
-                      let res = money;
-                      res += dice * mult
-                      updateMoney(res)
+                      updateMoney((money) => money + (dice * mult))
                       navigation.setParams({
-                          money: res
-                      })
+                          money: money
+                      });
                       break;
                   case 3:
                   case 6:
                   case 11:
-                      let res_3 = money;
-                      res_3 += (dice[0] + dice[1] + dice[2]) * mult
-                      updateMoney(res_3)
+                      updateMoney((money) => money + (dice[0] + dice[1] + dice[2]) * mult)
                       navigation.setParams({
-                          money: res_3
+                          money: money
                       })
                       break;
                   case 7:
                   case 10:
-                      let res_2 = money;
-                      res_2 += (dice[0] + dice[1]) * mult
-                      updateMoney(res_2)
+                      updateMoney((money) => money + (dice[0] + dice[1]) * mult)
                       navigation.setParams({
-                          money: res_2
+                          money: money
                       })
                       break;
               }
@@ -361,7 +357,7 @@ export default function Battlefield({route, navigation}) {
               setModalOption("nextState")
               break;
           case "getMagicItem":
-              if(treasureMagicItemTable[monsters[8].Treasure[0]][0] >= dice)
+              if(treasureMagicItemTable[monsters[8].Treasure[0]][0] === dice ||treasureMagicItemTable[monsters[8].Treasure[0]][0] !== dice)
                   send("EXIST")
               else {
                   if(monsters[8 - turn_index - 1].Name !== undefined) {
@@ -377,18 +373,54 @@ export default function Battlefield({route, navigation}) {
               setModalOption("nextState")
               break;
           case "findMagicItem":
-              if (magicItemsAmount === 0)
-                  if(monsters[8].Treasure[0] !== 11 && monsters[8].Treasure[0] !== 10 && monsters[8].Treasure[0] !== 9)
+              if (magicItemsAmount === 0) {
+                  if (monsters[8].Treasure[0] !== 11 && monsters[8].Treasure[0] !== 10 && monsters[8].Treasure[0] !== 9)
                       magicItemsAmount = 1
                   else
                       magicItemsAmount = halfDiceRoll(dice)
-              else {
-                  updateMagicItem(getMagicItem(dice[0], dice[1]))
-                  send("NEXT")
-                  setModalVisible(false)
+                  setModalOption("nextState")
+                  break;
               }
-              setModalOption("nextState")
-              break;
+              else if (magicItem.type === undefined) {
+                  let recievedMagicItem = getMagicItem(1, dice[1])
+                  updateMagicItem(getMagicItem(1, dice[1]))
+                  if (recievedMagicItem.type !== "Weapon" && recievedMagicItem.effect !== "Throw twice") {
+                      send("NEXT")
+                      setModalVisible(false)
+                  } else {
+                      setModalOption("nextState")
+                  }
+                  setModalOption("nextState")
+                  break;
+              } else {
+                  if(magicItem.type === "Weapon"){
+                      if (dice === 6){
+                          changeNumOfDices((num) => num + 1)
+                      } else {
+                          updateReceivedWeaponDamage((dmg) => dmg + weaponBonus(dice))
+                          if(numOfDices > 1)
+                              changeNumOfDices((num) => num - 1)
+                          else {
+                              send("NEXT")
+                              setModalVisible(false)
+                          }
+                      }
+                  } else if (magicItem.type === "Armor"){
+                      if (dice === 6){
+                          changeNumOfDices((num) => num + 1)
+                      } else {
+                          updateMagicItem((item) => item.effect === "Throw twice"? item.effect = magicItemsTable[1][dice - 1] : item.effect + magicItemsTable[1][dice - 1])
+                          if(numOfDices > 1)
+                              changeNumOfDices((num) => num - 1)
+                          else {
+                              send("NEXT")
+                              setModalVisible(false)
+                          }
+                      }
+                  }
+                  setModalOption("nextState")
+                  break;
+              }
       }
   }
 
@@ -545,18 +577,54 @@ export default function Battlefield({route, navigation}) {
                   </View>
               )
           case "findMagicItem":
-              return(
-                  <View>
-                      <Text style={styles.modalText}>Check what kind of Magic Item that is!</Text>
-                  </View>
-              )
+              if(magicItemsAmount === 0) {
+                  return (
+                      <View>
+                          <Text style={styles.modalText}>Check how many magic items there are!</Text>
+                      </View>
+                  )
+              } else if (magicItem.type === undefined){
+                  return(
+                      <View>
+                          <Text style={styles.modalText}>Check what kind of magic item there is!</Text>
+                      </View>
+                  )
+              } else if (magicItem.type === "Weapon"){
+                  return(
+                      <View>
+                          <Text style={styles.modalText}>Find the damage for {magicItem.effect}</Text>
+                          <Text style={styles.modalText}>Current damage: {receivedWeaponDamage}</Text>
+                          <Text style={styles.modalText}>Remaining dice rolls: {numOfDices}</Text>
+                      </View>
+                  )
+              } else if (magicItem.type === "Armor"){
+                  return(
+                      <View>
+                          <Text style={styles.modalText}>Find the resistance of Armor!</Text>
+                          <Text style={styles.modalText}>Current resistance value: {magicItem.effect}</Text>
+                          <Text style={styles.modalText}>Remaining dice rolls: {numOfDices}</Text>
+                      </View>
+                  )
+              }
           case "assignMagicItem":
-              return(
-                  <View>
-                      <Text style={styles.modalText}>{member.Name} will get {magicItem.type} of {magicItem.effect}!</Text>
-                      <Text style={styles.modalText}>Do you accept it?</Text>
-                  </View>
-              )
+              if (magicItem.type !== "Weapon") {
+                  return (
+                      <View>
+                          <Text style={styles.modalText}>{member.Name} will
+                              get {magicItem.type} of {magicItem.effect}!</Text>
+                          <Text style={styles.modalText}>Do you accept it?</Text>
+                      </View>
+                  )
+              } else {
+                  return (
+                      <View>
+                          <Text style={styles.modalText}>{member.Name} will get {magicItem.effect} +{receivedWeaponDamage}!</Text>
+                          <Text style={styles.modalText}>Current {member.Name}'s weapons: {member.Weapon[0]}, {member.Weapon[1]}</Text>
+                          <Text style={styles.modalText}>Current weapon bonus: +{member.WS[1]} for {member.WS[0]}</Text>
+                          <Text style={styles.modalText}>Do you want to replace {member.WS[0]} +{member.WS[1]} with {magicItem.effect} +{receivedWeaponDamage}?</Text>
+                      </View>
+                  )
+              }
       }
   }
 
@@ -641,9 +709,9 @@ export default function Battlefield({route, navigation}) {
               setModalOption("DiceRoll");
               break;
           case "findMagicItem":
-              if (magicItemsAmount === 0)
+              if (magicItemsAmount === 0 || magicItem.type !== undefined)
                   updateDice(rollDice())
-              else{
+              else {
                   let magicItemArr = []
                   magicItemArr[0] = rollDice()
                   magicItemArr[1] = rollDice()
@@ -814,22 +882,37 @@ export default function Battlefield({route, navigation}) {
                       </View>
                       <View style={{width:125}}>
                           <TouchableOpacity
-                            onPress={() => {
-                                member.Inventory.push(magicItem)
-                                magicItemsAmount -= 1
-                                setModalOption("nextState")
-                                if(magicItemsAmount > 0)
-                                    send("REPEAT")
-                                else if (monsters[8 - turn_index - 1].Name !== undefined) {
-                                    turn_index += 1
-                                    send("NEXT")
+                            onPress={() =>
+                                {
+                                    if (magicItem.type !== "Weapon") {
+                                        member.Inventory.push(magicItem)
+                                    } else {
+                                        if(member.Weapon.includes(member.WS[0])) {
+                                            member.Weapon[member.Weapon.indexOf(member.WS[0])] = magicItem.effect
+                                            member.WS[0] = magicItem.effect
+                                            member.WS[1] = receivedWeaponDamage
+                                        } else {
+                                            member.Weapon[0] = magicItem.effect
+                                            member.WS[0] = magicItem.effect
+                                            member.WS[1] = receivedWeaponDamage
+                                        }
+                                    }
+                                    updateMagicItem({})
+                                    updateReceivedWeaponDamage(0)
+                                    magicItemsAmount -= 1
+                                    setModalOption("nextState")
+                                    if (magicItemsAmount > 0)
+                                        send("REPEAT")
+                                    else if (monsters[8 - turn_index - 1].Name !== undefined) {
+                                        turn_index += 1
+                                        send("NEXT")
+                                    } else {
+                                        turn_index = 0
+                                        setModalVisible(false)
+                                        send("DONE")
+                                    }
                                 }
-                                else {
-                                    turn_index = 0
-                                    setModalVisible(false)
-                                    send("DONE")
-                                }
-                            }}
+                            }
                           >
                               <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
                                   <Text style={styles.textStyle}>Yes</Text>
@@ -972,11 +1055,11 @@ export default function Battlefield({route, navigation}) {
                       <FlatList data={member.Weapon}
                                 scrollEnabled={false}
                                 renderItem={({item, index}) => (
-                          <TouchableOpacity onPress={() => {
+                          <TouchableOpacity key={index} onPress={() => {
                               Dice()
                               setChosenWeapon(item)
                           }}>
-                              <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
+                              <View  style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
                                   <Text style={styles.textStyle}>{item}</Text>
                               </View>
                           </TouchableOpacity>
@@ -1003,7 +1086,7 @@ export default function Battlefield({route, navigation}) {
                       <FlatList data={member.Spells}
                                 scrollEnabled={false}
                                 renderItem={({item, index}) => (
-                          <TouchableOpacity onPress={() => {
+                          <TouchableOpacity key={index} onPress={() => {
                               Dice()
                               setChosenSpell(item)
                           }}>
@@ -1155,7 +1238,7 @@ export default function Battlefield({route, navigation}) {
             return (
                 <View style={[styles.textButtonContainer, {backgroundColor: null, width: 300}]}>
                   <Text style={[styles.textButton, {color: "black"}]}>Choose who will get the</Text>
-                  <Text style={[styles.textButton, {color: "black"}]}>{magicItem.type} of {magicItem.effect}</Text>
+                  <Text style={[styles.textButton, {color: "black"}]}>{magicItem.type === "Weapon" ? magicItem.effect + " +" + receivedWeaponDamage : magicItem.type + " of " + magicItem.effect}</Text>
                   <Text style={[styles.textButton, {color: "black"}]}>(Remaining magic items: {magicItemsAmount})</Text>
                 </View>
             )
@@ -1184,17 +1267,23 @@ export default function Battlefield({route, navigation}) {
   }
 
   useEffect(() => {
-        console.log(xp)
+        console.log("XP: "+xp)
   }, [xp])
 
   useEffect(() => {
-        console.log(money)
+        console.log("Gold: "+money)
   }, [money])
 
   useEffect(() => {
         console.log(state.value)
   }, [state.value])
 
+  useEffect(() => {
+        console.log(magicItem)
+  }, [magicItem])
+  useEffect(() => {
+        console.log(receivedWeaponDamage)
+  }, [receivedWeaponDamage])
 
   useEffect(() => {
     console.log(usedMembers);

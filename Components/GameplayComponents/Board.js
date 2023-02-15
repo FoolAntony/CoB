@@ -294,7 +294,7 @@ export default function Board({route, navigation}) {
   function AfterDiceActions(dice) {
     switch(state.value){
       case "checkTraps":
-        if (dice) {
+        if (dice < 1) {
           send("EXIST")
           setModalOption("nextState")
           setModalVisible(true)
@@ -327,12 +327,12 @@ export default function Board({route, navigation}) {
           let mod_board = JSON.parse(JSON.stringify(boardMap));
           switch (trapType){
               case "Arrows":
-                  let damage_1 = battleResult(dice, "Bow");
+                  let damage_1 = battleResult( undefined, dice, "Bow");
                   mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_1;
                   changeBoardMap(mod_board);
                   break;
               case "Poison Arrows":
-                  let damage_2 = battleResult(dice[0], "Bow") + halfDiceRoll(dice[1]);
+                  let damage_2 = battleResult(undefined, dice[0], "Bow") + halfDiceRoll(dice[1]);
                   mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_2;
                   changeBoardMap(mod_board);
                   break;
@@ -360,7 +360,7 @@ export default function Board({route, navigation}) {
         setModalOption("nextState")
         setModalVisible(false)
         if(state.context.goNewTile === true && isCorridorConnection(prevIndex) === false){
-          if (dice < 4) {
+          if (dice < 4 || dice >= 4) {
             send("EXIST")
             navigation.navigate({
               name: "Battle",

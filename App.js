@@ -22,14 +22,14 @@ let team = [{"CB": 5, "MP": [0, 0, 0], "Name": "Weldron", "RV": 2, "Race": "Huma
             "WP": 8, "WS": ["Axe", 1], "Weapon": ["Axe", "Bow"], "id": 17, "Treasure": [],"Inventory": []}, {"CB": null, "MP": [1, 1, 1], "Name": "A", "RV": 2, "Race": "Elf", "Skill": ["Negotiation", 1], "Spells": ["Flattery"], "WP": 5, "WS": ["Bow", 1],
             "Weapon": ["Dagger", "T-Dagger"], "id": 27, "Treasure": [],"Inventory": []}, {"CB": null, "MP": [0, 0, 0], "Name": "G", "RV": 2, "Race": "Elf", "Skill": ["Negotiation", 1], "Spells": [], "WP": 5, "WS": ["Bow", 1],
             "Weapon": ["Sword", "T-Dagger"], "id": 28, "Treasure": [],"Inventory": []}, {"CB": null, "MP": [2, 2, 2], "Name": "H", "RV": 1, "Race": "Human", "Skill": ["Hellgate", 1], "Spells": [], "WP": 7, "WS": ["Sword", 1],
-            "Weapon": ["T-Dagger", "Bow"], "id": 31, "Treasure": [],"Inventory": []}, {}, {}, {}];
+            "Weapon": ["T-Dagger", "Bow"], "id": 31, "Treasure": [],"Inventory": [{"effect": "Combat Bonus", "type": "Medallion"}]}, {}, {}, {}];
 
 function StackScreens() {
   return (
         <Stack.Navigator>
           {/*<Stack.Screen initialParams={{level: 1, squad: team, money: 0, XP: 0}} name={"Squad"} component={Squad}/>*/}
-          {/*<Stack.Screen initialParams={{level: 1, squad: team, money: 0, XP: 0}} name={"Board"} component={Board}/>*/}
-          <Stack.Screen initialParams={{level: 1, squad: team, money: 0, XP: 0}} name={"Battle"} component={Battlefield}/>
+          <Stack.Screen initialParams={{level: 1, squad: team, money: 0, XP: 0}} name={"Board"} component={Board}/>
+          <Stack.Screen name={"Battle"} component={Battlefield}/>
         </Stack.Navigator>
   );
 }
