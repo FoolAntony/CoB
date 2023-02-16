@@ -66,36 +66,34 @@ export default function Board({route, navigation}) {
   }, [state, tile, route.params?.squad])
 
   useEffect(() => {
-      if (route.params?.squad){
-         console.log("Squad update!")
-         let mod_board = JSON.parse(JSON.stringify(boardMap))
-         mod_board[currentIndex].squad.squad = route.params.squad;
-         changeBoardMap(mod_board)
-       }
-      if (route.params?.money){
-         console.log("Money update!")
-         let mod_board = JSON.parse(JSON.stringify(boardMap))
-         mod_board[currentIndex].squad.money = route.params.money;
-         changeBoardMap(mod_board)
-       }
-      if (route.params?.XP){
-         console.log("XP update!")
-         let mod_board = JSON.parse(JSON.stringify(boardMap))
-         mod_board[currentIndex].squad.XP = route.params.XP;
-         changeBoardMap(mod_board)
-       }
-  }, [route.params?.squad, route.params?.money, route.params?.XP])
+      if (route.params?.squad) {
+          console.log("Squad update!")
+          let mod_board = JSON.parse(JSON.stringify(boardMap))
+          mod_board[currentIndex].squad.squad = route.params.squad;
+          changeBoardMap(mod_board)
+      }
+  }, [route.params?.squad])
+  useEffect(()=> {
+      if (route.params?.XP || route.params?.money) {
+          console.log("XP & Money update!")
+          let mod_board = JSON.parse(JSON.stringify(boardMap))
+          mod_board[currentIndex].squad.XP = route.params.XP;
+          mod_board[currentIndex].squad.money = route.params.money;
+          changeBoardMap(mod_board)
+      }
+  }, [route.params?.XP, route.params?.money]);
+
 
   useEffect(() => {
         console.log(boardMap[currentIndex].squad.squad)
   }, [boardMap[currentIndex].squad.squad])
 
   useEffect(() => {
-        console.log(boardMap[currentIndex].squad.money)
+        console.log("Money: " + boardMap[currentIndex].squad.money)
   }, [boardMap[currentIndex].squad.money])
 
   useEffect(() => {
-        console.log(boardMap[currentIndex].squad.XP)
+        console.log("XP: " + boardMap[currentIndex].squad.XP)
   }, [boardMap[currentIndex].squad.XP])
 
 

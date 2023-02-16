@@ -9,7 +9,6 @@ import {
     negotiation,
     rollDice, treasureGoldTable, treasureJewelryTable, treasureMagicItemTable, weaponBonus
 } from "../GameController";
-import {CompleteSquad} from "./Squad";
 import {useMachine} from "@xstate/react";
 import {battleMachine} from "../StateMachine/StateMachine.Battle";
 
@@ -55,7 +54,7 @@ function areEqual(array1, array2) {
 
 
 export default function Battlefield({route, navigation}) {
-  const [money, updateMoney] = useState(route.params.money)
+  const [gold, updateGold] = useState(route.params.money)
   const [team, updateTeam] = useState(route.params.squad);
   const [xp, updateXP] = useState(route.params.XP)
   const [state, send] = useMachine(battleMachine)
@@ -73,9 +72,7 @@ export default function Battlefield({route, navigation}) {
   const [receivedWeaponDamage, updateReceivedWeaponDamage] = useState(0)
 
 
-
   let uptMonsters = MonsterSet;
-  let uptTeam = JSON.parse(JSON.stringify(team));
 
 
   const SetMember = (member) => {
@@ -207,8 +204,8 @@ export default function Battlefield({route, navigation}) {
               }
               break;
           case "doBribery":
-              if (brib > money) {
-                  Alert.alert("Sorry, but you have not enough gold. You need " + (brib - money) + " more. The only way is to fight, I guess...")
+              if (brib > gold) {
+                  Alert.alert("Sorry, but you have not enough gold. You need " + (brib - gold) + " more. The only way is to fight, I guess...")
               } else {
                   let strongest_monster = checkStrongestMonster()
                   let b_res = briberyResult(strongest_monster, brib)
@@ -217,6 +214,11 @@ export default function Battlefield({route, navigation}) {
                       setModalVisible(false)
                       Alert.alert("You have failed bribery with result higher than " + b_res + ". Try something else!")
                   } else {
+                      let gold_left = gold - brib
+                      updateGold(gold_left)
+                      navigation.setParams({
+                          money: gold_left
+                      });
                       send("SUCCESS")
                       setModalVisible(false)
                       Alert.alert("You have succeeded bribery with result lower than " + b_res + "! Monsters leave you alone! Victory! ")
@@ -230,7 +232,7 @@ export default function Battlefield({route, navigation}) {
               } else if (chosenSpell !== null){
 
               }
-              // monster.WP = monster.WP - damage;
+              monster.WP = monster.WP - damage;
               monster.WP = 0
               usedMembers[turn_index] = member;
               setChosenWeapon(null)
@@ -244,7 +246,7 @@ export default function Battlefield({route, navigation}) {
                   updateXP((xp) => xp + total_WP * 6)
                   navigation.setParams({
                       XP: xp
-                  })
+                  });
                   // placeMonsters({monster: {}, amount: 9})
                   send("DONE")
               } else if (SquadIsOver(monsters) === false) {
@@ -278,7 +280,7 @@ export default function Battlefield({route, navigation}) {
                   showMember(team[id])
                   setModalOption("nextState")
               } else {
-                  let m_damage = battleResult((monster.CB + dice), monster.Weapon ? monster.Weapon : "Monster")
+                  let m_damage = battleResult(monster, dice,monster.Weapon ? monster.Weapon : "Monster")
                   member.WP = member.WP - m_damage;
                   usedMembers[turn_index] = monster;
                   if(monsters[8 - turn_index - 1].WP <= 0) {
@@ -305,6 +307,7 @@ export default function Battlefield({route, navigation}) {
               }
               break;
           case "getGold":
+              total_WP = 0
               if(treasureGoldTable[monsters[8].Treasure[0]][0] >= dice)
                   send("EXIST")
               else
@@ -313,27 +316,27 @@ export default function Battlefield({route, navigation}) {
               break;
           case "findGold":
               let mult = treasureGoldTable[monsters[8].Treasure[0]][1]
+              let gold_added = gold
               switch(monsters[8].Treasure[0]){
                   default:
-                      updateMoney((money) => money + (dice * mult))
+                      gold_added += dice * mult
+                      updateGold(gold_added)
                       navigation.setParams({
-                          money: money
+                        money: gold_added,
+                        XP: xp
                       });
                       break;
                   case 3:
                   case 6:
                   case 11:
-                      updateMoney((money) => money + (dice[0] + dice[1] + dice[2]) * mult)
-                      navigation.setParams({
-                          money: money
-                      })
-                      break;
                   case 7:
                   case 10:
-                      updateMoney((money) => money + (dice[0] + dice[1]) * mult)
+                      gold_added += dice.reduce((a, b) => a + b, 0) * mult
+                      updateGold(gold_added)
                       navigation.setParams({
-                          money: money
-                      })
+                        money: gold_added,
+                        XP: xp
+                      });
                       break;
               }
               send("NEXT")
@@ -464,7 +467,7 @@ export default function Battlefield({route, navigation}) {
                 <Text style={styles.modalText}>Try to bribe!</Text>
                 <Text style={styles.modalText}>You have to choose how much money you will give to the monsters!</Text>
                 <Text style={styles.modalText}>Remember! Higher result (Highest WP over the squad + NV) require more money to succeed bribery.</Text>
-                <Text style={styles.modalText}>You have {money} gold.</Text>
+                <Text style={styles.modalText}>You have {gold} gold.</Text>
                 <View style={{flexDirection:"row", height:50}}>
                     <TouchableOpacity
                         style={{marginLeft:10}}
@@ -1247,15 +1250,22 @@ export default function Battlefield({route, navigation}) {
                 <View style={{width: 300}}>
                     <Text style={[styles.textButton, {color: "black"}]}>Fight Completed!</Text>
                     <TouchableOpacity onPress={() => {
-                         navigation.navigate({
+                        updateDice(0)
+                        placeMonsters({monster: {}, amount: 9})
+                        navigation.setParams({
+                            squad: team,
+                            money: gold,
+                            XP: xp
+                        })
+                        navigation.navigate({
                           name: "Board",
                           params: {
                               level: 1,
                               squad: team,
-                              money: money,
+                              money: gold,
                               XP: xp
                           }
-                      });
+                        });
                     }}>
                         <View style={styles.textButtonContainer}>
                             <Text style={styles.textButton}>End Session!</Text>
@@ -1271,8 +1281,8 @@ export default function Battlefield({route, navigation}) {
   }, [xp])
 
   useEffect(() => {
-        console.log("Gold: "+money)
-  }, [money])
+        console.log("Gold: "+gold)
+  }, [gold])
 
   useEffect(() => {
         console.log(state.value)
@@ -1286,22 +1296,27 @@ export default function Battlefield({route, navigation}) {
   }, [receivedWeaponDamage])
 
   useEffect(() => {
+      if (route.params?.squad)
+          updateTeam(route.params.squad)
+  },[route.params?.squad])
+  useEffect(()=> {
+        if (route.params?.money || route.params?.XP) {
+            updateGold(route.params.money)
+            updateXP(route.params.XP)
+        }
+  },[route.params?.money, route.params?.XP])
+
+  useEffect(() => {
     console.log(usedMembers);
     console.log(turn_index);
     console.log(team);
-    if(route.params?.squad)
-        updateTeam(route.params.squad)
-    if(route.params?.money)
-        updateMoney(route.params.money)
-    if(route.params?.XP)
-        updateXP(route.params.XP)
-  }, [route.params?.money, route.params?.squad, route.params?.XP, uptMonsters, usedMembers, turn_index, team])
+  }, [usedMembers, turn_index, team])
 
 
   return (
     <View style={[styles.container]}>
       <View style={{paddingBottom:10, paddingTop: 10, flexDirection:"row"}}>
-        <Text style={[styles.textHeader, {flex:1, alignSelf: 'flex-start'}]}>Money:{JSON.stringify(money)}</Text>
+        <Text style={[styles.textHeader, {flex:1, alignSelf: 'flex-start'}]}>Money:{JSON.stringify(gold)}</Text>
         <Text style={[styles.textHeader, {flex:1, alignSelf: 'center'}]}>FIGHT!</Text>
         <Text style={[styles.textHeader, {alignSelf: 'flex-end'}]}>XP:{JSON.stringify(xp)}</Text>
       </View>

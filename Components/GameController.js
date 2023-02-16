@@ -236,8 +236,8 @@ export function monsterWanderingType(d1,d2,dice){
 export function battleResultNum(item, dice, type){
     let res = 0
   if (item !== undefined)
-      res = (item.CB !== undefined ? (item.CB !== null ? item.CB : 0) : 0) + dice + (item.WS !== null ? (item.WS[0] === type ? item.WS[1] : 0) : 0) +
-        + (item.Inventory.includes((object) => (object.type === "Medallion" && object.effect === "Combat Bonus")) ? 2 : 0);
+      res = (item.CB !== undefined ? (item.CB !== null ? item.CB : 0) : 0) + dice + (item.WS !== undefined ? (item.WS !== null ? (item.WS[0] === type ? item.WS[1] : 0) : 0) : 0) +
+        + (item.Inventory !== undefined ? (item.Inventory.includes((object) => (object.type === "Medallion" && object.effect === "Combat Bonus")) ? 2 : 0) : 0);
   else
       res = dice
   let index = 0
