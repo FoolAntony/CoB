@@ -77,25 +77,86 @@ export const boardMachine = createMachine(
       },
       moveSquad: {
         on: {
-          NEXT: "checkMonsters"
+          NEXT: {
+            target: "checkMonsters",
+          }
         }
       },
       checkMonsters: {
         on: {
-          EXIST: "doBattle",
+          EXIST: {
+            target: "doBattle",
+            actions:"restoreGoNewTile"
+          },
           NONE: {
-            target:"idle",
+            target:"chooseAfterBattleAction",
             actions:"restoreGoNewTile"
           }
         }
       },
       doBattle: {
         on:{
-          WIN: {
-            target:"idle",
-            actions:"restoreGoNewTile"
-          },
+          WIN: "chooseAfterBattleAction",
           LOSE: "finish"
+        }
+      },
+      chooseAfterBattleAction: {
+        on:{
+          NEXT: "idle",
+          CHECK: "chooseRoomMember"
+        }
+      },
+      chooseRoomMember:{
+        on:{
+          FURNITURE: "furniture",
+          MIRROR: "mirror",
+          ART: "art",
+          TRAPDOOR: "trapdoor",
+          STATUE: "statue",
+          STAIRS: "stairs",
+          FOUNTAIN: "fountain",
+          ALTAR: "altar"
+        }
+      },
+      fountain:{
+        on:{
+          NEXT:"idle"
+        }
+      },
+      statue:{
+        on:{
+          TRANSFER: "",
+          NEXT:"idle",
+        }
+      },
+      furniture: {
+        on:{
+
+        }
+      },
+      mirror:{
+        on:{
+
+        }
+      },
+      trapdoor:{
+        on:{
+
+        }
+      },
+      stairs:{
+        on:{
+
+        }
+      },
+      altar:{
+        on:{
+
+        }
+      },
+      art:{
+        on:{
+
         }
       },
       finish: {

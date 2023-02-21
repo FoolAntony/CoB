@@ -12,7 +12,8 @@
     "WS": ["Bow", 1],
     "Skill": ["Negotiation", 1],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 25,
@@ -27,7 +28,8 @@
     "WS": ["Axe", 1],
     "Skill": ["Detrap", 1],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 26,
@@ -42,6 +44,7 @@
     "WS": ["Sword", 1],
     "Skill": ["Hellgate", 1],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   }
 ]

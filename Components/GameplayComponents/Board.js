@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, {useEffect, useState} from "react";
 import {
   Alert,
-  FlatList, KeyboardAvoidingView, Modal,
+  FlatList, Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,7 +11,15 @@ import {
 import {ReactNativeZoomableView} from "@openspacelabs/react-native-zoomable-view";
 import {useMachine} from "@xstate/react";
 import {boardMachine} from "../StateMachine/StateMachine.Board";
-import {battleResult, getTile, halfDiceRoll, idRandomTile, rollDice} from "../GameController";
+import {
+    battleResult,
+    CheckRoomInside,
+    getMagicItem,
+    getTile,
+    halfDiceRoll,
+    idRandomTile, jewelryTable,
+    rollDice
+} from "../GameController";
 
 
 let initBoard = Array(187).fill({})
@@ -55,7 +63,8 @@ export default function Board({route, navigation}) {
   const [newIndex, setNewIndex] = useState(null)
   const [prevIndex, setPrevIndex] = useState(null)
   const [memberIndex, updateMemberIndex] = useState(null);
-  const [trapType, setTrapType] = useState("")
+  const [trapType, setTrapType] = useState("");
+  const [roomType, currentRoomType] = useState()
 
   useEffect(() => {
    console.log(state.value)
@@ -97,16 +106,26 @@ export default function Board({route, navigation}) {
   }, [boardMap[currentIndex].squad.XP])
 
 
-  function SetMember(index){
-    if (boardMap[currentIndex].squad.squad[index].Skill[0] === "Detrap") {
-      send("NEXT")
-    } else {
-      send("NEXT")
-      send("FAIL")
-    }
-    updateMemberIndex(index)
-    setModalOption("nextState")
-    setModalVisible(true)
+  function SetMember(index) {
+      switch (state.value) {
+          case "chooseMember":
+              let detrapSkill = boardMap[currentIndex].squad.squad[index].Skill.find((skill)=> skill.Name === "Detrap")
+              if(detrapSkill !== undefined)
+                  send("NEXT")
+              else{
+                  send("NEXT")
+                  send("FAIL")
+              }
+              updateMemberIndex(index)
+              setModalOption("nextState")
+              setModalVisible(true)
+              break;
+          case "chooseRoomMember":
+              updateMemberIndex(index)
+              setModalOption("nextState")
+              send("NEXT")
+              break;
+      }
   }
 
 
@@ -174,6 +193,18 @@ export default function Board({route, navigation}) {
           Alert.alert("Player have chosen wrong board place for this tile. Please, check if sides of the connected tiles are the same and there is squad in one of them!")
         }
         break;
+        case "choosePrevTile":
+            if (mod_board[index].type === undefined){
+                Alert.alert("Please, press on non-empty tile!")
+                break;
+            }
+            if (CheckTilesConnected(index) === true) {
+                setNewIndex(index)
+                send("NEXT")
+            } else {
+                Alert.alert("Please, choose the tile connected to the current squad position!")
+            }
+            break;
       case"moveSquad":
         boardMap[index].squad = boardMap[currentIndex].squad;
         boardMap[currentIndex].squad = {};
@@ -292,7 +323,7 @@ export default function Board({route, navigation}) {
   function AfterDiceActions(dice) {
     switch(state.value){
       case "checkTraps":
-        if (dice < 1) {
+        if (dice === 1) {
           send("EXIST")
           setModalOption("nextState")
           setModalVisible(true)
@@ -302,18 +333,16 @@ export default function Board({route, navigation}) {
           setModalVisible(false)
         }
         break;
-        case "doDetrap":
-        let max = boardMap[currentIndex].squad.squad[memberIndex].Skill[1]
-        if (dice <= max) {
+      case "doDetrap":
+        let detrapSkill = boardMap[currentIndex].squad.squad[memberIndex].Skill.find((skill) => skill.Name === "Detrap")
+        if (detrapSkill !== undefined && dice <= detrapSkill.Value) {
             send("SUCCESS")
             setModalVisible(false)
-        }
-        else {
+        } else {
             send("FAIL")
             setModalVisible(true)
         }
         setModalOption("nextState")
-
         break;
       case "findType":
           setTrapType(CheckTrapType(dice))
@@ -358,7 +387,7 @@ export default function Board({route, navigation}) {
         setModalOption("nextState")
         setModalVisible(false)
         if(state.context.goNewTile === true && isCorridorConnection(prevIndex) === false){
-          if (dice < 4 || dice >= 4) {
+          if (dice < 4) {
             send("EXIST")
             navigation.navigate({
               name: "Battle",
@@ -386,9 +415,166 @@ export default function Board({route, navigation}) {
           else
             send("NONE")
         }
+        break;
+      case "checkRoom":
+          if (roomType === undefined) {
+              let room = CheckRoomInside(boardMap[currentIndex].type, dice)
+              currentRoomType(room)
+              setModalOption("nextState")
+          } else {
+              switch (roomType){
+                  case "fountain":
 
+              }
+          }
+          break;
     }
   }
+
+    function GetFountainEvent(){
+      let mod_board = JSON.parse(JSON.stringify(boardMap));
+        switch (roomType){
+            case "Poison":
+                mod_board[currentIndex].squad.squad[memberIndex].WP -= halfDiceRoll(dice)
+                changeBoardMap(mod_board);
+                break;
+            case "Potion":
+                mod_board[currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(3, dice))
+                changeBoardMap(mod_board);
+                break;
+            case "Alcohol":
+                mod_board[currentIndex].squad.squad[memberIndex].CB < 2 ? mod_board[currentIndex].squad.squad[memberIndex].CB -= 2 : mod_board[currentIndex].squad.squad[memberIndex].CB = 0
+                changeBoardMap(mod_board);
+                break;
+            case "Diamond":
+                mod_board[currentIndex].squad.squad[memberIndex].Treasure.push(jewelryTable(dice[0] + dice [2] + 2))
+                changeBoardMap(mod_board);
+                break;
+            case "Water":
+                break;
+            case "Blood":
+                mod_board[currentIndex].squad.squad[memberIndex].CB < 2  ? mod_board[currentIndex].squad.squad[memberIndex].CB -= 1 : mod_board[currentIndex].squad.squad[memberIndex].CB = 0
+                changeBoardMap(mod_board);
+        }
+        navigation.setParams({
+              squad: mod_board[currentIndex].squad.squad
+          })
+    }
+
+    function GetStatueEvent(dice){
+      let mod_board = JSON.parse(JSON.stringify(boardMap));
+        switch (roomType){
+            case "Medusa":
+
+                break;
+            case "Diamond":
+                mod_board[currentIndex].squad.squad[memberIndex].Treasure.push(jewelryTable(dice[0] + dice [2] + 2))
+                changeBoardMap(mod_board);
+                navigation.setParams({
+                    squad: mod_board[currentIndex].squad.squad
+                })
+                break;
+            case "Medallion":
+                mod_board[currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(5, dice))
+                changeBoardMap(mod_board);
+                navigation.setParams({
+                    squad: mod_board[currentIndex].squad.squad
+                })
+                break;
+            case "Demon":
+
+                break;
+            case "Talisman":
+                mod_board[currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(4, dice))
+                changeBoardMap(mod_board);
+                navigation.setParams({
+                    squad: mod_board[currentIndex].squad.squad
+                })
+                break;
+            case "Unknown":
+
+                break;
+        }
+    }
+
+    function GetTrapdoorEvent(dice){
+      let mod_board = JSON.parse(JSON.stringify(boardMap));
+        switch (roomType){
+            case "Trap":
+                mod_board[currentIndex].squad.squad[memberIndex].WP -= halfDiceRoll(dice)
+                changeBoardMap(mod_board);
+                break;
+            case "Room":
+                mod_board[currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(3, dice))
+                changeBoardMap(mod_board);
+                break;
+            case "Hatch":
+                mod_board[currentIndex].squad.squad[memberIndex].CB < 2 ? mod_board[currentIndex].squad.squad[memberIndex].CB -= 2 : mod_board[currentIndex].squad.squad[memberIndex].CB = 0
+                changeBoardMap(mod_board);
+                break;
+            case "Hellgate":
+                mod_board[currentIndex].squad.squad[memberIndex].Treasure.push(jewelryTable(dice[0] + dice [2] + 2))
+                changeBoardMap(mod_board);
+                break;
+            case "Water":
+                break;
+            case "Blood":
+                mod_board[currentIndex].squad.squad[memberIndex].CB < 2  ? mod_board[currentIndex].squad.squad[memberIndex].CB -= 1 : mod_board[currentIndex].squad.squad[memberIndex].CB = 0
+                changeBoardMap(mod_board);
+        }
+    }
+
+    function GetAltarEvent(dice){
+      let mod_board = JSON.parse(JSON.stringify(boardMap));
+      let resistance = mod_board[currentIndex].squad.squad[memberIndex].RV
+        switch (roomType){
+            case "Alloces":
+                if(dice > resistance)
+                    mod_board[currentIndex].squad.squad[memberIndex].CB -= 1
+                else
+                    mod_board[currentIndex].squad.squad[memberIndex].Effects.push("NoSpellCost")
+                changeBoardMap(mod_board);
+                break;
+            case "Vassago":
+                if(dice > resistance)
+                    mod_board[currentIndex].squad.squad[memberIndex].Skill = mod_board[currentIndex].squad.squad[memberIndex].Skill.filter((skill) => {return skill.Name !== "Detrap"});
+                else {
+                    let skillsList = mod_board[currentIndex].squad.squad[memberIndex].Skill;
+                    if (skillsList.some((skill) => skill.Name === "Detrap")){
+                        let skillIndex = skillsList.findIndex((skill) => skill.Name === "Detrap")
+                        skillsList[skillIndex].Value < 3 ?
+                            mod_board[currentIndex].squad.squad[memberIndex].Skill[skillIndex].Value += 3 :
+                            mod_board[currentIndex].squad.squad[memberIndex].Skill = 5
+                    } else {
+                        mod_board[currentIndex].squad.squad[memberIndex].Skill.push({Name:"Detrap", Value: 3})
+                    }
+                }
+                changeBoardMap(mod_board);
+                break;
+            case "Anvas":
+                if(dice > resistance);
+
+                else;
+
+                changeBoardMap(mod_board);
+                break;
+            case "Malthus":
+                if(dice > resistance);
+
+                else;
+
+                changeBoardMap(mod_board);
+                break;
+            case "Lerae":
+                break;
+            case "Asmodus":
+                mod_board[currentIndex].squad.squad[memberIndex].CB < 2  ? mod_board[currentIndex].squad.squad[memberIndex].CB -= 1 : mod_board[currentIndex].squad.squad[memberIndex].CB = 0
+                changeBoardMap(mod_board);
+        }
+        navigation.setParams({
+              squad: mod_board[currentIndex].squad.squad
+          })
+    }
 
   function NextStateTemplate() {
   switch (state.value){
@@ -409,7 +595,7 @@ export default function Board({route, navigation}) {
           <View>
             <Text style={styles.modalText}>Choose who will detrap!</Text>
             <Text style={styles.modalText}>If hero does not have "Detrap" skill, detrap will be failed!</Text>
-            <Text style={styles.modalText}>Your dice roll result must be lower that or equal to the skill value!</Text>
+            <Text style={styles.modalText}>Your dice roll result must be lower than or equal to the skill value!</Text>
             <View style={styles.list}>
               <FlatList
                   style={styles.flatlist}
@@ -419,10 +605,14 @@ export default function Board({route, navigation}) {
                   renderItem={({item, index}) => (
                       <View>
                         <TouchableOpacity onPress={() => SetMember(index)}>
-                          <View style={[styles.tileContainer, {backgroundColor: item.Name ? "silver" : "grey"}]}>
+                          <View style={[styles.tileContainer, {backgroundColor: item.Name ? "silver" : "grey", width:100, height: 100}]}>
                             <Text style={[styles.textButton, {textAlign: "center", color:"black",fontSize: 14}]}>{item.Name ? item.Name : index < 6 ? "Lonely..." : "Empty"}</Text>
-                            <Text style={[styles.textButton, {textAlign: "center", color:"black",fontSize: 14}]}>{item.Skill ? item.Skill[0] + ": " + item.Skill[1] : null}</Text>
-                          </View>
+                              {item.Skill ? item.Skill.map((skill, skillIndex)=> {
+                                  return(
+                                      <Text key={skillIndex} style={[styles.textButton, {textAlign: "center", color:"black",fontSize: 14}]}>{skill.Name}: +{skill.Value}</Text>
+                                  )
+                              }) : null}
+                            </View>
                         </TouchableOpacity>
                       </View>
                   )}
@@ -448,6 +638,38 @@ export default function Board({route, navigation}) {
                 <Text style={styles.modalText}>Roll dice to find damage!</Text>
               </View>
           )
+      case "chooseRoomMember":
+          return (
+              <View>
+                <Text style={styles.modalText}>There is some kind of a {boardMap[currentIndex].type} in this room!</Text>
+                <Text style={styles.modalText}>Choose character to check it!</Text>
+                <View style={styles.list}>
+                  <FlatList
+                      style={styles.flatlist}
+                      scrollEnabled={false}
+                      data={boardMap[currentIndex].squad.squad}
+                      numColumns={3}
+                      renderItem={({item, index}) => (
+                          <View>
+                            <TouchableOpacity onPress={() => SetMember(index)}>
+                              <View style={[styles.tileContainer, {backgroundColor: item.Name ? "silver" : "grey"}]}>
+                                <Text style={[styles.textButton, {textAlign: "center", color:"black",fontSize: 14}]}>{item.Name ? item.Name : index < 6 ? "Lonely..." : "Empty"}</Text>
+                                <Text style={[styles.textButton, {textAlign: "center", color:"black",fontSize: 14}]}>{item.Skill ? item.Skill[0] + ": " + item.Skill[1] : null}</Text>
+                                <Text style={[styles.textButton, {textAlign: "center", color:"black",fontSize: 14}]}>{item.WP ? "WP: " + item.WP : null}</Text>
+                              </View>
+                            </TouchableOpacity>
+                          </View>
+                      )}
+                  />
+                </View>
+              </View>
+          )
+      case "checkRoom":
+          return(
+              <View>
+                <Text style={styles.modalText}>Check what kind of {boardMap[currentIndex].type} that is!</Text>
+              </View>
+          )
   }
 }
 
@@ -463,6 +685,7 @@ function ModalButton() {
         </TouchableOpacity>
       )
     case "chooseMember":
+    case "chooseRoomMember":
       break;
   }
 }
@@ -472,9 +695,9 @@ function ModalButton() {
     if (item.type !== undefined) {
       return (
           <View style={[styles.textContainer, {borderColor: item.squad.squad !== undefined ? "red" : "silver"}]}>
-            <Text style={[styles.text, {textAlign: "center"}]}>{item.top}</Text>
-            <Text style={styles.text}>{item.left} {item.right}</Text>
-            <Text style={[styles.text, {textAlign: "center"}]}>{item.bottom}</Text>
+            <Text style={[styles.text]}>{item.top}</Text>
+              <Text style={[styles.text]}>{item.left} {item.right}</Text>
+            <Text style={[styles.text]}>{item.bottom}</Text>
           </View>
       )
     } else {
@@ -589,6 +812,31 @@ function ModalButton() {
               </TouchableOpacity>
             </View>
         )
+      case "choosePrevTile":
+             return(
+                <View style={{}}>
+                  <Text style={[styles.textButton, {color: "black"}]}>Choose the tile you want to go!</Text>
+                </View>
+        )
+      case "chooseAfterBattleAction":
+            return(
+            <View style={{flexDirection:"row"}}>
+              <TouchableOpacity onPress={() => send("NEXT")}>
+                <View style={styles.textButtonContainer}>
+                  <Text style={styles.textButton}>Continue</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => {
+                  send("CHECK")
+                  setModalVisible(true)
+                  setModalOption("nextState")
+              }}>
+                <View style={styles.textButtonContainer}>
+                  <Text style={styles.textButton}>Check Room!</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+        )
       case "moveSquad":
         return(
             <View style={{flexDirection:"row"}}>
@@ -680,6 +928,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   text: {
+    textAlign:"center",
     fontSize:4,
   },
   textContainer: {
@@ -709,13 +958,13 @@ const styles = StyleSheet.create({
     alignSelf:"center",
   },
   list: {
-    alignSelf: "center",
+    justifyContent: "center",
     height:405,
     width:360,
     borderColor:"red",
   },
   flatlist: {
-    alignContent:"center"
+    alignSelf:"center"
   },
   buttonAdd: {
     paddingBottom:150

@@ -35,6 +35,35 @@ export const monst = (name => monsterDataset.find(m => {
   return m.Name === name;
 }))
 
+const foutainTypeList = ["Poison", "Potion", "Alcohol", "Diamond", "Water", "Blood"]
+const statueTypeList = ["Medusa", "Diamond", "Medallion", "Demon", "Talisman", "Unknown"]
+const trapdoorTypeList = ["Trap", "Room", "Hatch", "Hellgate"]
+const furnitureTypeList = ["Coffin", "Closet", "Desk", "Bed", "Harpsichord", "Mirror"]
+const altarTypeList = ["Alloces", "Vassago", "Anvas", "Malthus", "Lerae", "Asmodus"]
+const artTypeList = ["Gobelin", "Drawing", "Sculpture", "Cristal", "Icon", "Manuscript"]
+
+export function CheckRoomInside(type, dice) {
+    switch (type) {
+        case "fountain":
+            return foutainTypeList[dice - 1]
+        case "statue":
+            return statueTypeList[dice - 1]
+        case "trapdoor":
+            if(dice < 3)
+                return trapdoorTypeList[0]
+            else if (dice >= 3 && dice < 5)
+                return trapdoorTypeList[1]
+            else
+                return trapdoorTypeList[dice - 3]
+        case "furniture":
+            return furnitureTypeList[dice - 1]
+        case "altar":
+            return altarTypeList[dice - 1]
+        case "art":
+            return artTypeList[dice - 1]
+    }
+}
+
 
 
 export const monsterTable = [
@@ -236,8 +265,9 @@ export function monsterWanderingType(d1,d2,dice){
 export function battleResultNum(item, dice, type){
     let res = 0
   if (item !== undefined)
-      res = (item.CB !== undefined ? (item.CB !== null ? item.CB : 0) : 0) + dice + (item.WS !== undefined ? (item.WS !== null ? (item.WS[0] === type ? item.WS[1] : 0) : 0) : 0) +
-        + (item.Inventory !== undefined ? (item.Inventory.includes((object) => (object.type === "Medallion" && object.effect === "Combat Bonus")) ? 2 : 0) : 0);
+      res = (item.CB !== undefined && item.CB !== null ? item.CB : 0) + dice +
+          + (item.WS !== undefined ? item.WS.filter(skill => skill.Type === type).reduce((a,b) => a + b.Damage, 0) : 0) +
+        + (item.Inventory !== undefined && item.Inventory.includes((object) => (object.effect === "Combat Bonus")) ? 2 : 0);
   else
       res = dice
   let index = 0
@@ -419,6 +449,8 @@ let jewelry_table = [1, 5, 10, 15, 20, 25, 35, 50, 75, 100, 150];
 
 export function jewelryTable(res) {
   let i = res - 2;
+  if (i > 10)
+      i = 10
   return jewelry_table[i];
 }
 

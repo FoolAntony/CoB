@@ -376,7 +376,7 @@ const addNewFollower = () => {
                     <Text style={styles.modalText}>{member.CB ? "Combat Bonus : " + member.CB : undefined}</Text>
                     <Text style={styles.modalText}>{member.Weapon ? "Weapons: " + member.Weapon : undefined}</Text>
                     <Text style={styles.modalText}>{member.WS ? "Weapon Skills: " + "+" + member.WS[1] + " for " + member.WS[0] : undefined}</Text>
-                    <Text style={styles.modalText}>{member.Skill ? "Hero Skills: " + "+" + member.Skill[1] + " in " + member.Skill[0] : undefined}</Text>
+                    <Text style={styles.modalText}>{member.Skill ? "Hero Skills: " + member.Skill.find((skill)=> {return skill.Name + ": +" + skill.Value}) : undefined}</Text>
                     <TouchableOpacity
                         style={[styles.button, styles.buttonClose]}
                         onPress={() => setModalVisible(false)}

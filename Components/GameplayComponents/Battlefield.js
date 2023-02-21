@@ -360,7 +360,7 @@ export default function Battlefield({route, navigation}) {
               setModalOption("nextState")
               break;
           case "getMagicItem":
-              if(treasureMagicItemTable[monsters[8].Treasure[0]][0] === dice ||treasureMagicItemTable[monsters[8].Treasure[0]][0] !== dice)
+              if(treasureMagicItemTable[monsters[8].Treasure[0]][0] >= dice)
                   send("EXIST")
               else {
                   if(monsters[8 - turn_index - 1].Name !== undefined) {
@@ -385,8 +385,8 @@ export default function Battlefield({route, navigation}) {
                   break;
               }
               else if (magicItem.type === undefined) {
-                  let recievedMagicItem = getMagicItem(1, dice[1])
-                  updateMagicItem(getMagicItem(1, dice[1]))
+                  let recievedMagicItem = getMagicItem(dice[0], dice[1])
+                  updateMagicItem(getMagicItem(dice[0], dice[1]))
                   if (recievedMagicItem.type !== "Weapon" && recievedMagicItem.effect !== "Throw twice") {
                       send("NEXT")
                       setModalVisible(false)
@@ -451,10 +451,11 @@ export default function Battlefield({route, navigation}) {
   function NextStateTemplate() {
       switch (state.value) {
         case "doNegotiation":
+            let negotiationSkill = member.Skill.find((skill) => skill.Name === "Negotiation")
           return (
               <View>
                 <Text style={styles.modalText}>{member.Name} will try to negotiate!</Text>
-                <Text style={styles.modalText}>His negotiation value is: {member.Skill[0] === "Negotiation" ? member.Skill[1] : 0}</Text>
+                <Text style={styles.modalText}>His negotiation value is: {negotiationSkill.Name === "Negotiation" ? negotiationSkill.Value : 0}</Text>
                 <Text style={styles.modalText}>Do you want to try?</Text>
               </View>
 
@@ -568,7 +569,7 @@ export default function Battlefield({route, navigation}) {
               return(
                   <View>
                       <Text style={styles.modalText}>{member.Name} will get this jewelry!</Text>
-                      <Text style={styles.modalText}>Their sum of current jewelries cost equals {JSON.stringify(member_wallet)}.</Text>
+                      <Text style={styles.modalText}>His jewelries cost equals {JSON.stringify(member_wallet)}.</Text>
                       <Text style={styles.modalText}>Found jewelry costs {jewelryCost} golds.</Text>
                       <Text style={styles.modalText}>Do you accept it?</Text>
                   </View>
@@ -623,8 +624,9 @@ export default function Battlefield({route, navigation}) {
                       <View>
                           <Text style={styles.modalText}>{member.Name} will get {magicItem.effect} +{receivedWeaponDamage}!</Text>
                           <Text style={styles.modalText}>Current {member.Name}'s weapons: {member.Weapon[0]}, {member.Weapon[1]}</Text>
-                          <Text style={styles.modalText}>Current weapon bonus: +{member.WS[1]} for {member.WS[0]}</Text>
-                          <Text style={styles.modalText}>Do you want to replace {member.WS[0]} +{member.WS[1]} with {magicItem.effect} +{receivedWeaponDamage}?</Text>
+                          <Text style={styles.modalText}>Current weapon skills: {member.WS.map((weaponSkill) => {return weaponSkill.Type + ": +" + weaponSkill.Damage})}</Text>
+                          <Text style={styles.modalText}>REMEMBER: only magic weapon skill will be removed, common skills will remain.</Text>
+                          <Text style={styles.modalText}>Do you accept it?</Text>
                       </View>
                   )
               }
@@ -729,6 +731,47 @@ export default function Battlefield({route, navigation}) {
               break;
       }
 };
+
+  function IsSomething(weapon, weaponFound){
+    return weapon.Type === weaponFound.Type && weapon.Magic === true
+  }
+
+  function CollectMagicItem(num){
+    if (magicItem.type !== "Weapon") {
+        member.Inventory.push(magicItem)
+    } else {
+        let weaponFound = {"Type": magicItem.effect, "Damage": receivedWeaponDamage, "Magic": true}
+        if (member.Weapon[num === 0 ? 1 : 0] !== weaponFound.Type)
+            member.Weapon[num] = weaponFound.Type
+        else {
+            Alert.alert("Hero must have two different kind of weapon!")
+            return;
+        }
+        if (member.WS.some((weapon) => IsSomething(weapon, weaponFound))) {
+            let weaponSkillIndex = member.WS.findIndex((weapon) => IsSomething(weapon, weaponFound))
+            member.WS[weaponSkillIndex].Damage = weaponFound.Damage
+        } else {
+            member.WS.push(weaponFound)
+        }
+        member.WS = member.WS.filter((weapon) => {
+            return weapon.Magic === undefined || weapon.Type === member.Weapon[0] || weapon.Type === member.Weapon[1]
+        })
+    }
+    updateMagicItem({})
+    updateReceivedWeaponDamage(0)
+    magicItemsAmount -= 1
+    setModalOption("nextState")
+    if (magicItemsAmount > 0)
+        send("REPEAT")
+    else if (monsters[8 - turn_index - 1].Name !== undefined) {
+        turn_index += 1
+        send("NEXT")
+    } else {
+        turn_index = 0
+        setModalVisible(false)
+        send("DONE")
+    }
+  }
 
 
   function ModalButton() {
@@ -869,6 +912,7 @@ export default function Battlefield({route, navigation}) {
                   </View>
               )
           case "assignMagicItem":
+              if(magicItem.type !== "Weapon")
               return(
                   <View style={{flexDirection:"row", paddingHorizontal:5}}>
                       <View style={{width:125}}>
@@ -885,40 +929,45 @@ export default function Battlefield({route, navigation}) {
                       </View>
                       <View style={{width:125}}>
                           <TouchableOpacity
-                            onPress={() =>
-                                {
-                                    if (magicItem.type !== "Weapon") {
-                                        member.Inventory.push(magicItem)
-                                    } else {
-                                        if(member.Weapon.includes(member.WS[0])) {
-                                            member.Weapon[member.Weapon.indexOf(member.WS[0])] = magicItem.effect
-                                            member.WS[0] = magicItem.effect
-                                            member.WS[1] = receivedWeaponDamage
-                                        } else {
-                                            member.Weapon[0] = magicItem.effect
-                                            member.WS[0] = magicItem.effect
-                                            member.WS[1] = receivedWeaponDamage
-                                        }
-                                    }
-                                    updateMagicItem({})
-                                    updateReceivedWeaponDamage(0)
-                                    magicItemsAmount -= 1
-                                    setModalOption("nextState")
-                                    if (magicItemsAmount > 0)
-                                        send("REPEAT")
-                                    else if (monsters[8 - turn_index - 1].Name !== undefined) {
-                                        turn_index += 1
-                                        send("NEXT")
-                                    } else {
-                                        turn_index = 0
-                                        setModalVisible(false)
-                                        send("DONE")
-                                    }
-                                }
-                            }
+                            onPress={() => CollectMagicItem(null)}
                           >
                               <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
                                   <Text style={styles.textStyle}>Yes</Text>
+                              </View>
+                          </TouchableOpacity>
+                      </View>
+                  </View>
+              )
+              else
+                  return(
+                  <View style={{flexDirection:"row", paddingHorizontal:5}}>
+                      <View style={{width:125}}>
+                          <TouchableOpacity
+                              onPress={() => {
+                                  setModalVisible(false)
+                              }}
+                          >
+                              <View style={[styles.button, {backgroundColor: "tomato", width:100}]}>
+                                  <Text style={styles.textStyle}>No</Text>
+                              </View>
+
+                          </TouchableOpacity>
+                      </View>
+                      <View style={{width:125}}>
+                          <TouchableOpacity
+                            onPress={() => CollectMagicItem(0)}
+                          >
+                              <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
+                                  <Text style={styles.textStyle}>Replace {member.Weapon[0]}!</Text>
+                              </View>
+                          </TouchableOpacity>
+                      </View>
+                      <View style={{width:125}}>
+                          <TouchableOpacity
+                            onPress={() => CollectMagicItem(1)}
+                          >
+                              <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
+                                  <Text style={styles.textStyle}>Replace {member.Weapon[1]}!</Text>
                               </View>
                           </TouchableOpacity>
                       </View>
@@ -931,6 +980,7 @@ export default function Battlefield({route, navigation}) {
   function ModalScreen() {
     switch (modalOption) {
       case "showHeroInfo":
+
         return(
               <Modal
                   animationType="slide"
@@ -950,8 +1000,8 @@ export default function Battlefield({route, navigation}) {
                     <Text style={styles.modalText}>{member.RV ? "Resistance / RV: " + member.RV : undefined}</Text>
                     <Text style={styles.modalText}>{member.CB ? "Combat Bonus : " + member.CB : undefined}</Text>
                     <Text style={styles.modalText}>{member.Weapon ? "Weapons: " + member.Weapon : undefined}</Text>
-                    <Text style={styles.modalText}>{member.WS ? "Weapon Skills: " + "+" + member.WS[1] + " for " + member.WS[0] : undefined}</Text>
-                    <Text style={styles.modalText}>{member.Skill ? "Hero Skills: " + "+" + member.Skill[1] + " in " + member.Skill[0] : undefined}</Text>
+                    <Text style={styles.modalText}>{member.WS ? "Weapon Skills: " + member.WS.map((weaponSkill) => {return weaponSkill.Type + ": +" + weaponSkill.Damage}) : undefined}</Text>
+                    <Text style={styles.modalText}>{member.Skill ? "Hero Skills: " + member.Skill.map((skill) => {return skill.Name + ": +" + skill.Value}) : undefined}</Text>
                     <TouchableOpacity
                         style={[styles.button, styles.buttonClose]}
                         onPress={() => {

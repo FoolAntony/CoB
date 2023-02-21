@@ -9,10 +9,11 @@
     "RV": 2,
     "CB": 3,
     "Weapon": ["Sword", "Dagger"],
-    "WS": ["Sword", 2],
-    "Skill": ["Hellgate", 1],
+    "WS": [{"Type":"Sword","Damage": 2}],
+    "Skill": [{"Name":"Hellgate","Value": 1}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 2,
@@ -24,10 +25,11 @@
     "RV": 2,
     "CB": 0,
     "Weapon": ["Sword", "T-Dagger"],
-    "WS": null,
-    "Skill": ["Hellgate", 1],
+    "WS": [],
+    "Skill": [{"Name":"Hellgate","Value": 2}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 3,
@@ -39,10 +41,11 @@
     "RV": 1,
     "CB": 0,
     "Weapon": ["Sword", "T-Dagger"],
-    "WS": null,
-    "Skill": ["Hellgate", 2],
+    "WS": [],
+    "Skill": [{"Name":"Hellgate","Value": 2}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 4,
@@ -54,10 +57,11 @@
     "RV": 3,
     "CB": 2,
     "Weapon": ["Bow", "Dagger"],
-    "WS": ["Bow", 2],
-    "Skill": ["Negotiation", 2],
+    "WS": [{"Type":"Bow","Damage": 2}],
+    "Skill": [{"Name":"Negotiation","Value": 2}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 5,
@@ -69,10 +73,11 @@
     "RV": 1,
     "CB": 4,
     "Weapon": ["Hammer", "Sword"],
-    "WS": ["Hammer", 1],
-    "Skill": ["Hellgate", 1],
+    "WS": [{"Type":"Hammer","Damage": 1}],
+    "Skill": [{"Name":"Hellgate","Value": 1}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 6,
@@ -84,10 +89,11 @@
     "RV": 2,
     "CB": 0,
     "Weapon": ["Bow", "T-Dagger"],
-    "WS": null,
-    "Skill": ["Hellgate", 2],
+    "WS": [],
+    "Skill": [{"Name":"Hellgate","Value": 2}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 7,
@@ -99,10 +105,11 @@
     "RV": 2,
     "CB": 6,
     "Weapon": ["Axe", "Dagger"],
-    "WS": ["Axe", 3],
-    "Skill": ["Detrap", 2],
+    "WS": [{"Type":"Axe","Damage": 3}],
+    "Skill": [{"Name":"Detrap", "Value": 2}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 8,
@@ -114,10 +121,11 @@
     "RV": 3,
     "CB": 4,
     "Weapon": ["Bow", "Dagger"],
-    "WS": ["Bow", 2],
-    "Skill": ["Negotiation", 2],
+    "WS": [{"Type":"Bow","Damage": 2}],
+    "Skill": [{"Name":"Negotiation","Value": 2}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 9,
@@ -129,10 +137,11 @@
     "RV": 3,
     "CB": 4,
     "Weapon": ["Axe", "Hammer"],
-    "WS": ["Axe", 2],
-    "Skill": ["Detrap", 3],
+    "WS": [{"Type":"Axe","Damage": 2}],
+    "Skill": [{"Name":"Detrap", "Value": 3}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 10,
@@ -144,10 +153,11 @@
     "RV": 3,
     "CB": 4,
     "Weapon": ["Bow", "Dagger"],
-    "WS": ["Bow", 2],
-    "Skill": ["Negotiation", 1],
+    "WS": [{"Type":"Bow","Damage": 2}],
+    "Skill": [{"Name":"Negotiation","Value": 1}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 11,
@@ -159,10 +169,11 @@
     "RV": 3,
     "CB": 0,
     "Weapon": ["Bow", "Dagger"],
-    "WS": null,
-    "Skill": ["Hellgate", 1],
+    "WS": [],
+    "Skill": [{"Name":"Hellgate","Value": 1}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 12,
@@ -174,10 +185,11 @@
     "RV": 2,
     "CB": 5,
     "Weapon": ["Bow", "Sword"],
-    "WS": ["Bow", 2],
-    "Skill": ["Negotiation", 3],
+    "WS": [{"Type":"Bow","Damage": 2}],
+    "Skill": [{"Name":"Negotiation","Value": 3}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 13,
@@ -189,10 +201,11 @@
     "RV": 3,
     "CB": 5,
     "Weapon": ["Sword", "Dagger"],
-    "WS": ["Sword", 2],
-    "Skill": ["Hellgate", 2],
+    "WS": [{"Type":"Sword","Damage": 2}],
+    "Skill": [{"Name":"Hellgate","Value": 2}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 14,
@@ -204,10 +217,11 @@
     "RV": 2,
     "CB": 0,
     "Weapon": ["Bow", "T-Dagger"],
-    "WS": ["Bow", 2],
-    "Skill": ["Negotiation", 2],
+    "WS": [{"Type":"Bow","Damage": 2}],
+    "Skill": [{"Name":"Negotiation","Value": 2}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 15,
@@ -219,10 +233,11 @@
     "RV": 2,
     "CB": 4,
     "Weapon": ["Sword", "T-Dagger"],
-    "WS": ["Sword", 2],
-    "Skill": ["Hellgate", 2],
+    "WS": [{"Type":"Sword","Damage": 2}],
+    "Skill": [{"Name":"Hellgate","Value": 2}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 16,
@@ -234,10 +249,11 @@
     "RV": 3,
     "CB": 4,
     "Weapon": ["Sword", "Dagger"],
-    "WS": ["Sword", 1],
-    "Skill": ["Detrap", 1],
+    "WS": [{"Type":"Sword","Damage": 1}],
+    "Skill": [{"Name":"Detrap","Value": 1}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 17,
@@ -249,10 +265,11 @@
     "RV": 2,
     "CB": 4,
     "Weapon": ["Axe", "Bow"],
-    "WS": ["Axe", 1],
-    "Skill": ["Detrap", 1],
+    "WS": [{"Type":"Axe","Damage": 1}],
+    "Skill": [{"Name":"Detrap","Value": 1}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 18,
@@ -264,10 +281,11 @@
     "RV": 2,
     "CB": 5,
     "Weapon": ["Sword", "Dagger"],
-    "WS": ["Sword", 2],
-    "Skill": ["Hellgate", 2],
+    "WS": [{"Type":"Sword","Damage": 2}],
+    "Skill": [{"Name":"Hellgate","Value": 2}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 19,
@@ -279,10 +297,11 @@
     "RV": 2,
     "CB": 1,
     "Weapon": ["Sword", "T-Dagger"],
-    "WS": ["Sword", 3],
-    "Skill": ["Hellgate", 3],
+    "WS": [{"Type":"Sword","Damage": 3}],
+    "Skill": [{"Name":"Hellgate","Value": 4}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 20,
@@ -294,10 +313,11 @@
     "RV": 2,
     "CB": 5,
     "Weapon": ["Sword", "Bow"],
-    "WS": ["Sword", 2],
-    "Skill": ["Hellgate", 3],
+    "WS": [{"Type":"Sword","Damage": 2}],
+    "Skill": [{"Name":"Hellgate","Value": 4}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 21,
@@ -309,10 +329,11 @@
     "RV": 2,
     "CB": 1,
     "Weapon": ["Sword", "Dagger"],
-    "WS": ["Dagger", 2],
-    "Skill": ["Hellgate", 4],
+    "WS": [{"Type":"Dagger","Damage": 2}],
+    "Skill": [{"Name":"Hellgate","Value": 4}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 22,
@@ -324,10 +345,11 @@
     "RV": 4,
     "CB": 4,
     "Weapon": ["Sword", "T-Dagger"],
-    "WS": ["Sword", 1],
-    "Skill": ["Hellgate", 3],
+    "WS": [{"Type":"Sword","Damage": 1}],
+    "Skill": [{"Name":"Hellgate","Value": 3}],
 "Treasure": [],
-"Inventory": []
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 23,
@@ -339,9 +361,10 @@
     "RV": 2,
     "CB": 3,
     "Weapon": ["Axe", "Dagger"],
-    "WS": ["Axe", 2],
-    "Skill": ["Detrap", 3],
+    "WS": [{"Type":"Axe","Damage": 2}],
+    "Skill": [{"Name":"Detrap", "Value": 3}],
     "Treasure": [],
-    "Inventory": []
+    "Inventory": [],
+"Effects": []
   }
 ]
