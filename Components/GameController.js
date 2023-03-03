@@ -35,12 +35,12 @@ export const monst = (name => monsterDataset.find(m => {
   return m.Name === name;
 }))
 
-const foutainTypeList = ["Poison", "Potion", "Alcohol", "Diamond", "Water", "Blood"]
-const statueTypeList = ["Medusa", "Diamond", "Medallion", "Demon", "Talisman", "Unknown"]
-const trapdoorTypeList = ["Trap", "Room", "Hatch", "Hellgate"]
-const furnitureTypeList = ["Coffin", "Closet", "Desk", "Bed", "Harpsichord", "Mirror"]
-const altarTypeList = ["Alloces", "Vassago", "Anvas", "Malthus", "Lerae", "Asmodus"]
-const artTypeList = ["Gobelin", "Drawing", "Sculpture", "Cristal", "Icon", "Manuscript"]
+export const foutainTypeList = ["Poison", "Potion", "Alcohol", "Diamond", "Water", "Blood"]
+export const statueTypeList = ["Medusa", "Diamond", "Medallion", "Demon", "Talisman", "Unknown"]
+export const trapdoorTypeList = ["Trap", "Room", "Hatch", "Hellgate"]
+export const furnitureTypeList = ["Coffin", "Closet", "Desk", "Bed", "Harpsichord", "Mirror"]
+export const altarTypeList = ["Alloces", "Vassago", "Anvas", "Malthus", "Lerae", "Asmodus"]
+export const artTypeList = ["Gobelin", "Drawing", "Sculpture", "Cristal", "Icon", "Manuscript"]
 
 export function CheckRoomInside(type, dice) {
     switch (type) {
@@ -251,6 +251,7 @@ export function monsterWanderingType(d1,d2,dice){
   let a = 1;
   let i = d1 - 1;
   let j = halfDiceRoll(d2) - 1;
+  let res = monsterWanderingTable[i][j]
   if ((d1 === 2 && d2 === 5) || (d1 === 2 && d2 === 6) || (d1 === 5 && d2 === 3) || (d1 === 5 && d2 === 4) || (d1 === 5 && d2 === 5) || (d1 === 5 && d2 === 6)) {
     a = halfDiceRoll(dice);
   } else if ((d1 === 3 && d2 === 5) || (d1 === 3 && d2 === 6)) {
@@ -259,11 +260,11 @@ export function monsterWanderingType(d1,d2,dice){
     a = dice;
   }
 
-  return {monster:monsterWanderingTable[i][j], amount: a};
+  return {monster: res, amount: a};
 }
 
 export function battleResultNum(item, dice, type){
-    let res = 0
+  let res = 0
   if (item !== undefined)
       res = (item.CB !== undefined && item.CB !== null ? item.CB : 0) + dice +
           + (item.WS !== undefined ? item.WS.filter(skill => skill.Type === type).reduce((a,b) => a + b.Damage, 0) : 0) +
@@ -313,6 +314,7 @@ export function battleResultNum(item, dice, type){
       index = 11;
       break;
   }
+  console.log("GameController result: "+res)
   return index
 }
 
@@ -537,4 +539,21 @@ export function getMonsterHP(item, dice){
         break;
     }
   }
+}
+
+export function SquadIsOver(arr) {
+    return arr.every(element => {
+      if (element.WP === undefined) {
+          return true
+      } else return element.WP <= 0;
+    });
+}
+
+
+export function areEqual(array1, array2) {
+    let values = (o) => Object.keys(o).sort().map(k => o[k]).join('|');
+    let mapped1 = array1.map(o => values(o));
+    let mapped2 = array2.map(o => values(o));
+
+    return mapped1.every(v => mapped2.includes(v));
 }

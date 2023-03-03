@@ -90,7 +90,8 @@ export const battleMachine = createMachine({
     heroesTurn: {
       on: {
         FINISH: "monstersTurn",
-        DONE: "getGold"
+        DONE: "getGold",
+        DONEROOM: "endSession"
       }
     },
     monstersTurn: {

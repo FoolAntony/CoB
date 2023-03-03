@@ -1,13 +1,14 @@
 import React, {useEffect, useState} from "react";
 import {Alert, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {
+    areEqual,
     battleResult,
     briberyMoneySet,
     briberyResult, getMagicItem,
     getMonsterHP, halfDiceRoll, jewelryTable, magicItemsTable,
-    monsterType,
+    monsterType, monsterWanderingType,
     negotiation,
-    rollDice, treasureGoldTable, treasureJewelryTable, treasureMagicItemTable, weaponBonus
+    rollDice, SquadIsOver, treasureGoldTable, treasureJewelryTable, treasureMagicItemTable, weaponBonus
 } from "../GameController";
 import {useMachine} from "@xstate/react";
 import {battleMachine} from "../StateMachine/StateMachine.Battle";
@@ -33,27 +34,8 @@ let jewelry_amount = 0
 let magicItemsAmount = 0
 
 
-  function SquadIsOver(arr) {
-    return arr.every(element => {
-      if (element.WP === undefined) {
-          return true
-      } else return element.WP <= 0;
-    });
-}
-
-
-function areEqual(array1, array2) {
-    let values = (o) => Object.keys(o).sort().map(k => o[k]).join('|');
-    let mapped1 = array1.map(o => values(o));
-    let mapped2 = array2.map(o => values(o));
-
-    return mapped1.every(v => mapped2.includes(v));
-}
-
-
-
-
 export default function Battlefield({route, navigation}) {
+  const [battleParams, setBattleParams] = useState(route.params.battle)
   const [gold, updateGold] = useState(route.params.money)
   const [team, updateTeam] = useState(route.params.squad);
   const [xp, updateXP] = useState(route.params.XP)
@@ -140,8 +122,38 @@ export default function Battlefield({route, navigation}) {
     switch (state.value){
       case "idle":
         setModalOption("nextState");
-        send("START");
-        setModalVisible(true)
+        setModalVisible(true);
+        if(battleParams === "normal" || battleParams === "wondering")
+            send("START");
+        else if (battleParams === "medusa" || battleParams === 'hatch' || battleParams === "vampire" || battleParams === "unknown"){
+            send("START")
+            send("NEXT")
+            send("NEXT")
+            let roomMonster;
+            switch (battleParams) {
+                case "medusa":
+                    roomMonster = monsterType(1, 6, 1)
+                    break;
+                case "vampire":
+                    roomMonster = monsterType(2, 3, 1)
+                    break;
+                case "hatch":
+                    roomMonster = monsterType(1, 3, halfDiceRoll(rollDice()))
+                    break;
+                case "unknown":
+                    let hero_index = team.findIndex((hero) => {
+                        return hero.Effects !== undefined && hero.Effects.includes("Enemy")
+                    })
+                    roomMonster = {monster: JSON.parse(JSON.stringify(team[hero_index])), amount: 1}
+                    let updTeam = JSON.parse(JSON.stringify(team))
+                    updTeam[hero_index] = {}
+                    updateTeam(updTeam)
+                    send("NEXT")
+                    setModalVisible(false)
+                    break;
+            }
+            placeMonsters(roomMonster)
+        }
         break;
       case "doFight":
          showMonster(monsters[8])
@@ -175,6 +187,8 @@ export default function Battlefield({route, navigation}) {
               setModalOption("nextState")
               send("NEXT")
               let choice = monsterType(dice[0], dice[1], dice[2])
+              if (battleParams === "wondering")
+                choice = monsterWanderingType(dice[0], dice[1], dice[2])
               placeMonsters(choice)
               break;
           case "findMonstersHP":
@@ -229,10 +243,11 @@ export default function Battlefield({route, navigation}) {
               let damage = 0
               if(chosenWeapon !== null) {
                   damage = battleResult(member, dice, chosenWeapon)
+                  console.log("Damage: " + damage )
               } else if (chosenSpell !== null){
 
               }
-              monster.WP = monster.WP - damage;
+              // monster.WP = monster.WP - damage;
               monster.WP = 0
               usedMembers[turn_index] = member;
               setChosenWeapon(null)
@@ -248,7 +263,10 @@ export default function Battlefield({route, navigation}) {
                       XP: xp
                   });
                   // placeMonsters({monster: {}, amount: 9})
-                  send("DONE")
+                  if(battleParams === "normal" || battleParams === "wondering")
+                      send("DONE")
+                  else
+                      send("DONEROOM")
               } else if (SquadIsOver(monsters) === false) {
                   if (areEqual(team, usedMembers) === true) {
                       send("FINISH")
@@ -360,7 +378,7 @@ export default function Battlefield({route, navigation}) {
               setModalOption("nextState")
               break;
           case "getMagicItem":
-              if(treasureMagicItemTable[monsters[8].Treasure[0]][0] >= dice)
+              if(treasureMagicItemTable[monsters[8].Treasure[0]][0] >= dice || true)
                   send("EXIST")
               else {
                   if(monsters[8 - turn_index - 1].Name !== undefined) {
@@ -385,8 +403,8 @@ export default function Battlefield({route, navigation}) {
                   break;
               }
               else if (magicItem.type === undefined) {
-                  let recievedMagicItem = getMagicItem(dice[0], dice[1])
-                  updateMagicItem(getMagicItem(dice[0], dice[1]))
+                  let recievedMagicItem = getMagicItem(1, dice[1])
+                  updateMagicItem(getMagicItem(1, dice[1]))
                   if (recievedMagicItem.type !== "Weapon" && recievedMagicItem.effect !== "Throw twice") {
                       send("NEXT")
                       setModalVisible(false)
@@ -624,7 +642,7 @@ export default function Battlefield({route, navigation}) {
                       <View>
                           <Text style={styles.modalText}>{member.Name} will get {magicItem.effect} +{receivedWeaponDamage}!</Text>
                           <Text style={styles.modalText}>Current {member.Name}'s weapons: {member.Weapon[0]}, {member.Weapon[1]}</Text>
-                          <Text style={styles.modalText}>Current weapon skills: {member.WS.map((weaponSkill) => {return weaponSkill.Type + ": +" + weaponSkill.Damage})}</Text>
+                          <Text style={styles.modalText}>Current weapon skills: {member.WS.map((weaponSkill) =>  {return "{" + weaponSkill.Type + ": +" + weaponSkill.Damage + (weaponSkill.Magic ?", Magic} " : "} ")})}</Text>
                           <Text style={styles.modalText}>REMEMBER: only magic weapon skill will be removed, common skills will remain.</Text>
                           <Text style={styles.modalText}>Do you accept it?</Text>
                       </View>
@@ -1000,8 +1018,8 @@ export default function Battlefield({route, navigation}) {
                     <Text style={styles.modalText}>{member.RV ? "Resistance / RV: " + member.RV : undefined}</Text>
                     <Text style={styles.modalText}>{member.CB ? "Combat Bonus : " + member.CB : undefined}</Text>
                     <Text style={styles.modalText}>{member.Weapon ? "Weapons: " + member.Weapon : undefined}</Text>
-                    <Text style={styles.modalText}>{member.WS ? "Weapon Skills: " + member.WS.map((weaponSkill) => {return weaponSkill.Type + ": +" + weaponSkill.Damage}) : undefined}</Text>
-                    <Text style={styles.modalText}>{member.Skill ? "Hero Skills: " + member.Skill.map((skill) => {return skill.Name + ": +" + skill.Value}) : undefined}</Text>
+                    <Text style={styles.modalText}>{member.WS ? "Weapon Skills: " + member.WS.map((weaponSkill) => {return "{" + weaponSkill.Type + ": +" + weaponSkill.Damage + (weaponSkill.Magic ? ", Magic} " : "} ")}) : undefined}</Text>
+                    <Text style={styles.modalText}>{member.Skill ? "Hero Skills: " + member.Skill.map((skill) => {return "{" + skill.Name + ": +" + skill.Value + "} "}) : undefined}</Text>
                     <TouchableOpacity
                         style={[styles.button, styles.buttonClose]}
                         onPress={() => {
@@ -1346,9 +1364,11 @@ export default function Battlefield({route, navigation}) {
   }, [receivedWeaponDamage])
 
   useEffect(() => {
-      if (route.params?.squad)
+      if (route.params?.squad || route.params?.battle) {
           updateTeam(route.params.squad)
-  },[route.params?.squad])
+          setBattleParams(route.params.battle)
+      }
+  },[route.params?.squad, route.params?.battle])
   useEffect(()=> {
         if (route.params?.money || route.params?.XP) {
             updateGold(route.params.money)

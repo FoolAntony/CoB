@@ -12,6 +12,14 @@ const setGoNewTile = assign({
   goNewTile: (context,event) => context.goNewTile = true
 })
 
+const setIsRoomTrue = assign({
+  isRoom: (context,event) => context.isRoom = true
+})
+
+const setIsRoomFalse = assign({
+  isRoom: (context,event) => context.isRoom = false
+})
+
 const restoreGoNewTile = assign({
   goNewTile: (context,event) => context.goNewTile = false
 })
@@ -22,7 +30,8 @@ export const boardMachine = createMachine(
     initial: "idle",
     context: {
       isBossAlive: false,
-      goNewTile: false
+      goNewTile: false,
+      isRoom: false
     },
     states: {
       idle: {
@@ -56,6 +65,7 @@ export const boardMachine = createMachine(
       },
       doDetrap: {
         on: {
+          SUCCESSROOM:"getGold",
           SUCCESS: "moveSquad",
           FAIL: "findType"
         }
@@ -67,7 +77,12 @@ export const boardMachine = createMachine(
       },
       doAction: {
         on: {
-          NEXT: "moveSquad"
+          NEXT: "moveSquad",
+          NEXTROOM: "getGold",
+          FAILROOM: {
+            target:"idle",
+            actions: "setIsRoomFalse"
+          }
         }
       },
       choosePrevTile: {
@@ -97,6 +112,11 @@ export const boardMachine = createMachine(
       doBattle: {
         on:{
           WIN: "chooseAfterBattleAction",
+          WINROOM: {
+            target: "idle",
+            actions: "setIsRoomFalse"
+          },
+          TREASURE:"getGold",
           LOSE: "finish"
         }
       },
@@ -107,56 +127,75 @@ export const boardMachine = createMachine(
         }
       },
       chooseRoomMember:{
-        on:{
-          FURNITURE: "furniture",
-          MIRROR: "mirror",
-          ART: "art",
-          TRAPDOOR: "trapdoor",
-          STATUE: "statue",
-          STAIRS: "stairs",
-          FOUNTAIN: "fountain",
-          ALTAR: "altar"
+        on: {
+          NEXT:{
+            target:"checkRoom",
+            actions:"setIsRoomTrue"
+          }
         }
       },
-      fountain:{
-        on:{
-          NEXT:"idle"
+      checkRoom:{
+        on: {
+          BATTLE:"doBattle",
+          CHECK:"checkMonsters",
+          TRAP:"doDetrap",
+          TREASURE:"getGold",
+          NEXT:{
+            target:"idle",
+            actions:"setIsRoomFalse"
+          }
         }
       },
-      statue:{
-        on:{
-          TRANSFER: "",
-          NEXT:"idle",
+      getGold: {
+        on: {
+            EXIST: "findGold",
+            NEXT: "getJewelry"
         }
       },
-      furniture: {
-        on:{
-
+      findGold: {
+        on: {
+            NEXT: "getJewelry"
         }
       },
-      mirror:{
-        on:{
-
+      getJewelry: {
+        on: {
+            EXIST: "findJewelry",
+            NEXT: "getMagicItem"
         }
       },
-      trapdoor:{
-        on:{
-
+      findJewelry: {
+        on: {
+            NEXT: "assignJewelry"
         }
       },
-      stairs:{
-        on:{
-
+      assignJewelry: {
+        on: {
+            REPEAT: "findJewelry",
+            NEXT: "getMagicItem"
         }
       },
-      altar:{
-        on:{
-
+      getMagicItem: {
+        on: {
+            EXIST: "findMagicItem",
+            DONE: {
+            target:"idle",
+            actions:"setIsRoomFalse"
+          },
+            NEXT: "getGold"
         }
       },
-      art:{
-        on:{
-
+      findMagicItem: {
+        on: {
+            NEXT: "assignMagicItem"
+        }
+      },
+      assignMagicItem: {
+        on: {
+            DONE: {
+              target:"idle",
+              actions:"setIsRoomFalse"
+            },
+            REPEAT: "findMagicItem"
         }
       },
       finish: {
@@ -167,6 +206,6 @@ export const boardMachine = createMachine(
   },
   {
     guards: { BossAlive },
-    actions: { setBossIsDefeated, restoreGoNewTile, setGoNewTile },
+    actions: { setBossIsDefeated, restoreGoNewTile, setGoNewTile, setIsRoomTrue, setIsRoomFalse },
   }
 );
