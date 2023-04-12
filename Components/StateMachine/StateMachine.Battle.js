@@ -96,8 +96,18 @@ export const battleMachine = createMachine({
     },
     monstersTurn: {
       on: {
-        FINISH: "heroesTurn",
+        FINISH: "heroesReformation",
         DONE: "endSession"
+      }
+    },
+    heroesReformation:{
+      on:{
+        NEXT: "monstersReformation"
+      }
+    },
+    monstersReformation:{
+      on:{
+        NEXT: "heroesTurn"
       }
     },
     getGold: {

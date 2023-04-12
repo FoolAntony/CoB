@@ -5,7 +5,7 @@ import {
     battleResult,
     briberyMoneySet,
     briberyResult, getMagicItem,
-    getMonsterHP, halfDiceRoll, jewelryTable, magicItemsTable,
+    getMonsterHP, getSpell, halfDiceRoll, jewelryTable, magicItemsTable,
     monsterType, monsterWanderingType,
     negotiation,
     rollDice, SquadIsOver, treasureGoldTable, treasureJewelryTable, treasureMagicItemTable, weaponBonus
@@ -44,6 +44,7 @@ export default function Battlefield({route, navigation}) {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalOption, setModalOption] = useState("showHeroInfo")
   const [member, showMember] = useState({});
+  const [memberToChange, setMemberToChange] = useState({})
   const [monster, showMonster] = useState({});
   const [dice, updateDice] = useState(null);
   const [chosenWeapon, setChosenWeapon] = useState(null);
@@ -52,69 +53,106 @@ export default function Battlefield({route, navigation}) {
   const [magicItem, updateMagicItem] = useState({});
   const [numOfDices, changeNumOfDices] = useState(1);
   const [receivedWeaponDamage, updateReceivedWeaponDamage] = useState(0)
+  const [monsterAmount, setMonsterAmount] = useState(0)
 
 
   let uptMonsters = MonsterSet;
 
+  useEffect(()=>{
+      console.log(member)
+  },[member])
 
-  const SetMember = (member) => {
+
+  const SetMember = (mem, index) => {
       switch (state.value) {
           default:
               setModalOption("showHeroInfo");
-              showMember(member);
+              showMember(mem);
               setModalVisible(true);
               break;
           case "doNegotiation":
           case "doBribery":
               if(member.Name !== undefined) {
                   setModalOption("nextState")
-                  showMember(member);
+                  showMember(mem);
                   setModalVisible(true)
               } else {
                   Alert.alert("Player pressed on empty space! Please, choose the place where hero exist!")
               }
               break;
           case "heroesTurn":
-              if(member.Name !== undefined && usedMembers.includes(member) === false) {
-                  showMember(member);
+              if(mem.Name !== undefined && usedMembers.includes(mem) === false) {
+                  showMember(mem);
               } else {
                   Alert.alert("Player pressed on empty space or hero must be already chosen!")
               }
               break;
-          case "assignJewelry":
-              if(member.Name !== undefined){
-                  setModalOption("nextState")
-                  setModalVisible(true)
-                  showMember(member)
-              } else
-                  Alert.alert("Please, choose the place where the hero exist!")
+          case "heroesReformation":
+              if(!Number.isInteger(member)){
+                  showMember(index)
+              } else if (!team[index].Name){
+                  if(member < 3) {
+                      if (index === 1) {
+                          [team[member], team[index]] = [team[index], team[member]]
+                          showMember({})
+                      } else {
+                          showMember({})
+                          Alert.alert("Error!")
+                      }
+                  } else {
+                      showMember({})
+                      Alert.alert("New Error!")
+                  }
+              }
               break;
+          case "assignJewelry":
           case "assignMagicItem":
-              if(member.Name !== undefined){
+              if(mem.Name !== undefined){
                   setModalOption("nextState")
                   setModalVisible(true)
-                  showMember(member)
+                  showMember(mem)
               } else
                   Alert.alert("Please, choose the place where the hero exist!")
               break;
       }
   }
 
-  const SetEnemy = (monster) => {
+  const SetEnemy = (monst, index) => {
       switch(state.value) {
           default:
               setModalOption("showMonsterInfo");
-              showMonster(monster);
+              showMonster(monst);
               setModalVisible(true);
               break;
           case "heroesTurn":
-              if (member.Name !== undefined && monster.Name !== undefined) {
+              if (member.Name !== undefined && monst.Name !== undefined) {
                   setModalOption("nextState")
-                  showMonster(monster)
+                  showMonster(monst)
                   setModalVisible(true)
               } else {
                   Alert.alert("Hero is not chosen yet or there is no monster!")
               }
+              break;
+          case "monstersReformation":
+              if(!Number.isInteger(monster)){
+                  showMonster(index)
+              } else if (monster > 5 && index <= 5) {
+                  if (monsters[monster].WP <= 0 && monsters[index].WP > 0) {
+                      [monsters[monster], monsters[index]] = [monsters[index], monsters[monster]]
+                      showMonster({})
+                  }
+              } else if (monster <= 5 && index > 5){
+                  if (monsters[index].WP <= 0 && monsters[monster].WP > 0) {
+                      [monsters[monster], monsters[index]] = [monsters[index], monsters[monster]]
+                      showMonster({})
+                  }
+              }
+              else {
+                  showMonster({})
+                  Alert.alert("You should replace dead monster from bottom line with alive monster from top lines")
+              }
+              break;
+
       }
   }
 
@@ -189,6 +227,7 @@ export default function Battlefield({route, navigation}) {
               let choice = monsterType(dice[0], dice[1], dice[2])
               if (battleParams === "wondering")
                 choice = monsterWanderingType(dice[0], dice[1], dice[2])
+              setMonsterAmount(choice.amount)
               placeMonsters(choice)
               break;
           case "findMonstersHP":
@@ -245,10 +284,24 @@ export default function Battlefield({route, navigation}) {
                   damage = battleResult(member, dice, chosenWeapon)
                   console.log("Damage: " + damage )
               } else if (chosenSpell !== null){
-
+                  if (dice > monster.RV){
+                      let spell = JSON.parse(JSON.stringify(getSpell(chosenSpell)))
+                      console.log(spell)
+                      member.WP -= spell.cost
+                      switch(chosenSpell){
+                          case "Blast":
+                              damage = 2;
+                              break;
+                          case "Thunderbolt":
+                              damage = halfDiceRoll(rollDice()) * 2;
+                              break;
+                          default:
+                              break;
+                      }
+                  }
               }
-              // monster.WP = monster.WP - damage;
-              monster.WP = 0
+              monster.WP -= damage;
+              // monster.WP = 0
               usedMembers[turn_index] = member;
               setChosenWeapon(null)
               setChosenSpell(null)
@@ -262,7 +315,6 @@ export default function Battlefield({route, navigation}) {
                   navigation.setParams({
                       XP: xp
                   });
-                  // placeMonsters({monster: {}, amount: 9})
                   if(battleParams === "normal" || battleParams === "wondering")
                       send("DONE")
                   else
@@ -444,6 +496,8 @@ export default function Battlefield({route, navigation}) {
               }
       }
   }
+
+
 
   function checkStrongestMonster () {
       let strongest = uptMonsters[8]
@@ -1123,18 +1177,18 @@ export default function Battlefield({route, navigation}) {
                 <View style={styles.centeredView}>
                   <View style={styles.modalView}>
                     <Text>Choose {member.Name}'s Weapon to use!</Text>
-                      <FlatList data={member.Weapon}
-                                scrollEnabled={false}
-                                renderItem={({item, index}) => (
-                          <TouchableOpacity key={index} onPress={() => {
-                              Dice()
-                              setChosenWeapon(item)
-                          }}>
-                              <View  style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
-                                  <Text style={styles.textStyle}>{item}</Text>
-                              </View>
-                          </TouchableOpacity>
-                    )}/>
+                      {member.Weapon ? member.Weapon.map((weapon, weaponIndex) => {
+                          return(
+                              <TouchableOpacity style={{paddingTop:5}} key={weaponIndex} onPress={() => {
+                                  Dice()
+                                  setChosenWeapon(weapon)
+                              }}>
+                                <View  style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
+                                    <Text style={styles.textStyle}>{weapon}</Text>
+                                </View>
+                              </TouchableOpacity>
+                          )})
+                      : null}
                   </View>
                 </View>
               </Modal>
@@ -1154,18 +1208,18 @@ export default function Battlefield({route, navigation}) {
                 <View style={styles.centeredView}>
                   <View style={styles.modalView}>
                      <Text>Choose {member.Name}'s Spell to use!</Text>
-                      <FlatList data={member.Spells}
-                                scrollEnabled={false}
-                                renderItem={({item, index}) => (
-                          <TouchableOpacity key={index} onPress={() => {
-                              Dice()
-                              setChosenSpell(item)
-                          }}>
-                           <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
-                                  <Text style={styles.textStyle}>{item}</Text>
-                           </View>
-                          </TouchableOpacity>
-                    )}/>
+                      {member.Spells ? member.Spells.map((spell, spellIndex) => {
+                          return(
+                              <TouchableOpacity style={{paddingTop:5}} key={spellIndex} onPress={() => {
+                                  Dice()
+                                  setChosenSpell(spell)
+                              }}>
+                                <View  style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
+                                    <Text style={styles.textStyle}>{spell}</Text>
+                                </View>
+                              </TouchableOpacity>
+                          )})
+                      : null}
                   </View>
                   </View>
               </Modal>
@@ -1189,7 +1243,7 @@ export default function Battlefield({route, navigation}) {
             numColumns={3}
             renderItem={({item, index}) => (
                 <View style={{alignSelf:"center", opacity: item.Name ? null : 0.6}}>
-                  <TouchableOpacity onPress={() => SetMember(item)}>
+                  <TouchableOpacity onPress={() => SetMember(item, index)}>
                     <View style={[styles.textContainer, {backgroundColor: item.Name ? "silver" : "grey"}]}>
                       <Text style={styles.text}>{item.Name ? item.Name : "Empty"}</Text>
                       <Text style={[styles.text, {fontSize: 14}]}>{item.WP ? "WP: " + item.WP : undefined}</Text>
@@ -1214,7 +1268,7 @@ export default function Battlefield({route, navigation}) {
             numColumns={3}
             renderItem={({item, index}) => (
                 <View style={{alignSelf:"center", opacity: item.Name ? null : 0.6}}>
-                  <TouchableOpacity onPress={() => SetEnemy(item)}>
+                  <TouchableOpacity onPress={() => SetEnemy(item, index)}>
                     <View style={[styles.textContainer, {backgroundColor: item.Name ? "maroon" : "black"}]}>
                       <Text style={[styles.text, {color:"white"}]}>{item.Name ? item.Name : "Empty"}</Text>
                       <Text style={[styles.text, {color:"white", fontSize: 14}]}>{item.WP ? "WP: " + item.WP : undefined}</Text>
@@ -1226,6 +1280,26 @@ export default function Battlefield({route, navigation}) {
       </View>
     )
   }
+
+  function FindAliveMonsters(){
+      let num = 0;
+      for(let i = 0; i < 9; i++) {
+          if(monsters[i].WP && monsters[i].WP > 0)
+              num += 1;
+      }
+      return num;
+  }
+
+  function AreMonstersFromFront(){
+      let num = 0;
+      let alive = FindAliveMonsters();
+      for(let i = 8; i > 5; i--) {
+          if(monsters[i].WP > 0)
+              num += 1;
+      }
+      return alive === num;
+  }
+
 
 
   function EventButton() {
@@ -1287,6 +1361,39 @@ export default function Battlefield({route, navigation}) {
               <TouchableOpacity onPress={ActionStates}>
                 <View style={styles.textButtonContainer}>
                   <Text style={styles.textButton}>Enemies Turn!</Text>
+                </View>
+              </TouchableOpacity>
+          )
+        case "heroesReformation":
+            return(
+              <TouchableOpacity onPress={() => {
+                  send("NEXT")
+                  if(monsterAmount <= 3 || AreMonstersFromFront()){
+                      send("NEXT")
+                  }
+              }}>
+                <View style={styles.textButtonContainer}>
+                  <Text style={styles.textButton}>Continue</Text>
+                </View>
+              </TouchableOpacity>
+          )
+        case "monstersReformation":
+            return(
+              <TouchableOpacity onPress={() => {
+                  if(FindAliveMonsters() > 2) {
+                      if (monsters[8].WP <= 0 || monsters[7].WP <= 0 || monsters[6].WP <= 0) {
+                          Alert.alert("Please, replace dead monsters from bottom line with alive monsters from top lines.")
+                      } else {
+                          send("NEXT")
+                      }
+                  } else if(AreMonstersFromFront()){
+                      send("NEXT")
+                  } else {
+                      Alert.alert("Please, replace dead monsters from bottom line with alive monsters from top lines.")
+                  }
+              }}>
+                <View style={styles.textButtonContainer}>
+                  <Text style={styles.textButton}>Continue</Text>
                 </View>
               </TouchableOpacity>
           )

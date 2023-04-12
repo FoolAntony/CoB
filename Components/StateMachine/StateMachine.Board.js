@@ -135,6 +135,11 @@ export const boardMachine = createMachine(
         }
       },
       checkRoom:{
+        on:{
+          NEXT: "checkRoomType"
+        }
+      },
+      checkRoomType:{
         on: {
           BATTLE:"doBattle",
           CHECK:"checkMonsters",

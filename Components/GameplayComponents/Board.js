@@ -15,7 +15,7 @@ import {
     altarTypeList,
     artTypeList,
     battleResult,
-    CheckRoomInside,
+    CheckRoomInside, FindHellGateDist, FindHellGateLevel,
     foutainTypeList,
     furnitureTypeList,
     getMagicItem,
@@ -33,10 +33,8 @@ import {
 } from "../GameController";
 
 
-let initBoard = []
-for (let i = 0; i < 3; i++){
-    initBoard[i] = Array(187).fill({})
-}
+let BoardTemplate = new Array(187).fill({})
+let initBoard = JSON.parse(JSON.stringify(Array(3).fill(BoardTemplate)))
 
 let jewelry_amount = 0
 
@@ -46,27 +44,25 @@ let trappedHeroes = []
 
 let currentIndex = 93
 
-const setInitBoard = (prms) =>{
-  initBoard[0][93] = {
-    type: "entry",
-    top: "",
-    right: "",
-    bottom: "",
-    left: "",
-    src: "",
-    rotationAngle: 0,
-    squad: {
-      squad: prms.squad,
-      money: prms.money,
-      XP: prms.XP,
-
-    }
-  };
-  return initBoard[0]
+function setInitBoard(prms){
+    initBoard[0][93] = {
+        type: "entry",
+        top: "",
+        right: "",
+        bottom: "",
+        left: "",
+        src: "",
+        rotationAngle: 0,
+        squad: {
+            squad: prms.squad,
+            money: prms.money,
+            XP: prms.XP,
+        }
+    };
+  return initBoard;
 }
 
 export default function Board({route, navigation}) {
-
   const [boardMap, changeBoardMap] = useState(setInitBoard(route.params))
   const [mapLevel, updateMapLevel] = useState(0)
   const [state, send] = useMachine(boardMachine)
@@ -86,10 +82,18 @@ export default function Board({route, navigation}) {
   const [levelHellGate, updateLevelHellGate] = useState(null)
   const [numOfTilesHellGate, updateNumOfTilesHellGate] = useState(null)
 
+
+  useEffect(() => {
+      console.log("HG Level: " + levelHellGate)
+      console.log("HG dist: " + numOfTilesHellGate)
+  }, [levelHellGate, numOfTilesHellGate])
+
+
   useEffect(() => {
    console.log(state.value)
    console.log(tile);
-   console.log("isRoom:" + state.context.isRoom)
+   console.log("isRoom: " + state.context.isRoom)
+   console.log("Level: " + mapLevel)
   }, [state, tile])
 
    useEffect(() => {
@@ -120,49 +124,50 @@ export default function Board({route, navigation}) {
                }
            }
        })
-  }, [state, route.params?.squad])
+  }, [navigation, state, route.params?.squad])
 
   useEffect(() => {
       if (route.params?.squad) {
           console.log("Squad update!")
           let mod_board = JSON.parse(JSON.stringify(boardMap))
           if(roomType !== "Hatch" || roomType !== "Room")
-              mod_board[currentIndex].squad.squad = route.params.squad;
+              mod_board[mapLevel][currentIndex].squad.squad = route.params.squad;
           else {
-              mod_board[currentIndex].squad.squad[memberIndex] = route.params.squad[0]
+              mod_board[mapLevel][currentIndex].squad.squad[memberIndex] = route.params.squad[0]
           }
           changeBoardMap(mod_board)
       }
   }, [route.params?.squad])
-  useEffect(()=> {
+
+  useEffect(() => {
       if (route.params?.XP || route.params?.money) {
           console.log("XP & Money update!")
           let mod_board = JSON.parse(JSON.stringify(boardMap))
-          mod_board[currentIndex].squad.XP = route.params.XP;
-          mod_board[currentIndex].squad.money = route.params.money;
+          mod_board[mapLevel][currentIndex].squad.XP = route.params.XP;
+          mod_board[mapLevel][currentIndex].squad.money = route.params.money;
           changeBoardMap(mod_board)
       }
   }, [route.params?.XP, route.params?.money]);
 
 
   useEffect(() => {
-        console.log(boardMap[currentIndex].squad.squad)
-  }, [boardMap[currentIndex].squad.squad])
+        console.log(boardMap[mapLevel][currentIndex].squad.squad)
+  }, [boardMap[mapLevel][currentIndex].squad.squad])
 
   useEffect(() => {
-        console.log("Money: " + boardMap[currentIndex].squad.money)
-  }, [boardMap[currentIndex].squad.money])
+        console.log("Money: " + boardMap[mapLevel][currentIndex].squad.money)
+  }, [boardMap[mapLevel][currentIndex].squad.money])
 
   useEffect(() => {
-        console.log("XP: " + boardMap[currentIndex].squad.XP)
-  }, [boardMap[currentIndex].squad.XP])
+        console.log("XP: " + boardMap[mapLevel][currentIndex].squad.XP)
+  }, [boardMap[mapLevel][currentIndex].squad.XP])
 
 
   function SetMember(index) {
       switch (state.value) {
           case "chooseMember":
-              if(boardMap[currentIndex].squad.squad[index].Name !== undefined) {
-                  let detrapSkill = boardMap[currentIndex].squad.squad[index].Skill.find((skill) => skill.Name === "Detrap")
+              if(boardMap[mapLevel][currentIndex].squad.squad[index].Name !== undefined) {
+                  let detrapSkill = boardMap[mapLevel][currentIndex].squad.squad[index].Skill.find((skill) => skill.Name === "Detrap")
                   if (detrapSkill !== undefined)
                       send("NEXT")
                   else {
@@ -176,7 +181,7 @@ export default function Board({route, navigation}) {
                   Alert.alert("Please choose the hero, not an empty space!")
               break;
           case "chooseRoomMember":
-              if(boardMap[currentIndex].squad.squad[index].Name !== undefined) {
+              if(boardMap[mapLevel][currentIndex].squad.squad[index].Name !== undefined) {
                   updateMemberIndex(index)
                   setModalOption("nextState")
                   send("NEXT")
@@ -196,11 +201,7 @@ export default function Board({route, navigation}) {
       return;
     }
     let modified = JSON.parse(JSON.stringify(tile));
-    let t = modified.top;
-    modified.top = modified.right;
-    modified.right = modified.bottom;
-    modified.bottom = modified.left;
-    modified.left = t;
+    [modified.top, modified.right, modified.bottom, modified.left] = [modified.right, modified.bottom, modified.left, modified.top];
     if (modified.rotationAngle === 0)
       modified.rotationAngle = 270
     else if (modified.rotationAngle === 90)
@@ -216,11 +217,7 @@ export default function Board({route, navigation}) {
       return;
     }
     let modified = JSON.parse(JSON.stringify(tile));
-    let t = modified.top;
-    modified.top = modified.left;
-    modified.left = modified.bottom;
-    modified.bottom = modified.right;
-    modified.right = t;
+    [modified.top, modified.left, modified.bottom, modified.right] = [modified.left, modified.bottom, modified.right, modified.top];
      if (modified.rotationAngle === 270)
       modified.rotationAngle = 0
     else
@@ -232,7 +229,7 @@ export default function Board({route, navigation}) {
     let mod_board = JSON.parse(JSON.stringify(boardMap))
     switch (state.value) {
         default:
-            console.log(boardMap[index]);
+            console.log(boardMap[mapLevel][index]);
             break;
         case "chooseNewTile":
             if (tile.type === undefined) {
@@ -240,7 +237,7 @@ export default function Board({route, navigation}) {
                 break;
             }
             if (CheckTilesConnected(index, tile) === true) {
-                mod_board[index] = JSON.parse(JSON.stringify(tile));
+                mod_board[mapLevel][index] = JSON.parse(JSON.stringify(tile));
                 changeBoardMap(mod_board);
                 send("NEXT")
                 if (isCorridorConnection(index) === true)
@@ -252,11 +249,11 @@ export default function Board({route, navigation}) {
             }
             break;
         case "choosePrevTile":
-            if (mod_board[index].type === undefined) {
+            if (mod_board[mapLevel][index].type === undefined) {
                 Alert.alert("Please, press on non-empty tile!")
                 break;
             }
-            if (CheckTilesConnected(index, boardMap[index]) === true) {
+            if (CheckTilesConnected(index, boardMap[mapLevel][index]) === true) {
                 setNewIndex(index)
                 send("NEXT")
             } else {
@@ -267,10 +264,13 @@ export default function Board({route, navigation}) {
   }
 
   function MoveSquad(index){
-      boardMap[index].squad = boardMap[currentIndex].squad;
-        boardMap[currentIndex].squad = {};
+        boardMap[mapLevel][index].squad = boardMap[mapLevel][currentIndex].squad;
+        boardMap[mapLevel][currentIndex].squad = {};
         setPrevIndex(currentIndex)
         currentIndex = index;
+        if(numOfTilesHellGate > 0) {
+            updateNumOfTilesHellGate((num) => num - 1)
+        }
         send("NEXT");
         setModalOption("nextState")
         setModalVisible(true)
@@ -279,16 +279,16 @@ export default function Board({route, navigation}) {
   function isCorridorConnection(index) {
     let res = false
     if(currentIndex === (index - 11)){
-      if (boardMap[index].bottom === boardMap[currentIndex].top && boardMap[currentIndex].top === "corr")
+      if (boardMap[mapLevel][index].bottom === boardMap[mapLevel][currentIndex].top && boardMap[mapLevel][currentIndex].top === "corr")
         res = true
     } else if(currentIndex === (index - 1)) {
-      if (boardMap[index].left === boardMap[currentIndex].right && boardMap[currentIndex].right === "corr")
+      if (boardMap[mapLevel][index].left === boardMap[mapLevel][currentIndex].right && boardMap[mapLevel][currentIndex].right === "corr")
         res = true
     } else if(currentIndex === (index + 1)) {
-      if (boardMap[index].right === boardMap[currentIndex].left && boardMap[currentIndex].left === "corr")
+      if (boardMap[mapLevel][index].right === boardMap[mapLevel][currentIndex].left && boardMap[mapLevel][currentIndex].left === "corr")
         res = true
     }else if(currentIndex === (index + 11)) {
-      if (boardMap[index].top === boardMap[currentIndex].bottom && boardMap[currentIndex].bottom === "corr")
+      if (boardMap[mapLevel][index].top === boardMap[mapLevel][currentIndex].bottom && boardMap[mapLevel][currentIndex].bottom === "corr")
         res = true
     }
       return res
@@ -300,32 +300,32 @@ export default function Board({route, navigation}) {
     let bottom_check = false
     let left_check = false
     if((index-1) === currentIndex || (index-11) === currentIndex || (index+1) === currentIndex || (index+11) === currentIndex) {
-      if ((Math.floor((index - 1) / 11) === Math.floor(index / 11)) && boardMap[index - 1].type !== undefined) {
-        if (boardMap[index - 1].type === "entry" || boardMap[index - 1].right === tile.left)
+      if ((Math.floor((index - 1) / 11) === Math.floor(index / 11)) && boardMap[mapLevel][index - 1].type !== undefined) {
+        if (boardMap[mapLevel][index - 1].type === "entry" || boardMap[mapLevel][index - 1].right === tile.left)
           left_check = true
         else
           console.log("Left error!")
       } else {
         left_check = true
       }
-      if (boardMap[index - 11].type !== undefined) {
-        if (boardMap[index - 11].type === "entry" || boardMap[index - 11].bottom === tile.top)
+      if (boardMap[mapLevel][index - 11].type !== undefined) {
+        if (boardMap[mapLevel][index - 11].type === "entry" || boardMap[mapLevel][index - 11].bottom === tile.top)
           top_check = true
         else
           console.log("Top error!")
       } else {
         top_check = true
       }
-      if ((Math.floor((index + 1) / 11) === Math.floor(index / 11)) && boardMap[index + 1].type !== undefined) {
-        if (boardMap[index + 1].type === "entry" || boardMap[index + 1].left === tile.right)
+      if ((Math.floor((index + 1) / 11) === Math.floor(index / 11)) && boardMap[mapLevel][index + 1].type !== undefined) {
+        if (boardMap[mapLevel][index + 1].type === "entry" || boardMap[mapLevel][index + 1].left === tile.right)
           right_check = true
         else
           console.log("Right error!")
       } else {
         right_check = true
       }
-      if (boardMap[index + 11].type !== undefined) {
-        if (boardMap[index + 11].type === "entry" || boardMap[index + 11].top === tile.bottom)
+      if (boardMap[mapLevel][index + 11].type !== undefined) {
+        if (boardMap[mapLevel][index + 11].type === "entry" || boardMap[mapLevel][index + 11].top === tile.bottom)
           bottom_check = true
         else
           console.log("Bottom error!")
@@ -420,7 +420,7 @@ export default function Board({route, navigation}) {
         }
         break;
       case "doDetrap":
-        let detrapSkill = boardMap[currentIndex].squad.squad[memberIndex].Skill.find((skill) => skill.Name === "Detrap")
+        let detrapSkill = boardMap[mapLevel][currentIndex].squad.squad[memberIndex].Skill.find((skill) => skill.Name === "Detrap")
         if (detrapSkill !== undefined && dice <= detrapSkill.Value) {
             if(state.context.isRoom === true)
                 send("SUCCESSROOM")
@@ -445,29 +445,29 @@ export default function Board({route, navigation}) {
           switch (trapType){
               case "Arrows":
                   let damage_1 = battleResult( undefined, dice, "Bow");
-                  mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_1;
+                  mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP = mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP - damage_1;
                   changeBoardMap(mod_board);
                   break;
               case "Poison Arrows":
                   let damage_2 = battleResult(undefined, dice[0], "Bow") + halfDiceRoll(dice[1]);
-                  mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_2;
+                  mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP = mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP - damage_2;
                   changeBoardMap(mod_board);
                   break;
               case "Poison Gas":
                   let damage_3 = halfDiceRoll(dice);
-                  mod_board[currentIndex].squad.squad[memberIndex].WP = mod_board[currentIndex].squad.squad[memberIndex].WP - damage_3;
+                  mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP = mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP - damage_3;
                   changeBoardMap(mod_board);
                   break;
               case "Explosion":
-                  for (let i = 0; i < mod_board[currentIndex].squad.squad.length; i++){
-                      if(mod_board[currentIndex].squad.squad[i].Name !== undefined)
-                          mod_board[currentIndex].squad.squad[i].WP = mod_board[currentIndex].squad.squad[i].WP - 1;
+                  for (let i = 0; i < mod_board[mapLevel][currentIndex].squad.squad.length; i++){
+                      if(mod_board[mapLevel][currentIndex].squad.squad[i].Name !== undefined)
+                          mod_board[mapLevel][currentIndex].squad.squad[i].WP = mod_board[mapLevel][currentIndex].squad.squad[i].WP - 1;
                   }
                   changeBoardMap(mod_board)
                   break;
           }
           navigation.setParams({
-              squad: mod_board[currentIndex].squad.squad
+              squad: mod_board[mapLevel][currentIndex].squad.squad
           })
           setModalOption("nextState")
 
@@ -476,7 +476,7 @@ export default function Board({route, navigation}) {
               setModalVisible(false)
           }
           else {
-              if(mod_board[currentIndex].squad.squad[memberIndex].WP <= 0)
+              if(mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP <= 0)
                   send("FAILROOM")
               else
                   send("NEXTROOM")
@@ -484,145 +484,160 @@ export default function Board({route, navigation}) {
           break;
       case "checkMonsters":
         setModalOption("nextState")
-        setModalVisible(false)
-        if(state.context.goNewTile === true && isCorridorConnection(prevIndex) === false){
-          if (dice < 4) {
+        setModalVisible(false);
+        if(numOfTilesHellGate === null || numOfTilesHellGate > 0){
+            if(state.context.goNewTile === true && isCorridorConnection(prevIndex) === false) {
+                if (dice < 4) {
+                    send("EXIST")
+                    navigation.navigate({
+                        name: "Battle",
+                        params: {
+                            squad: boardMap[mapLevel][currentIndex].squad.squad,
+                            money: boardMap[mapLevel][currentIndex].squad.money,
+                            XP: boardMap[mapLevel][currentIndex].squad.XP,
+                            battle: "normal"
+                        }
+                    })
+                } else
+                    send("NONE")
+            } else {
+                if (dice === 1) {
+                    send("EXIST")
+                    navigation.navigate({
+                        name: "Battle",
+                        params: {
+                            squad: boardMap[mapLevel][currentIndex].squad.squad,
+                            money: boardMap[mapLevel][currentIndex].squad.money,
+                            XP: boardMap[mapLevel][currentIndex].squad.XP,
+                            battle: "wondering"
+                        }
+                    })
+                } else
+                    send("NONE")
+            }
+        } else {
             send("EXIST")
             navigation.navigate({
-              name: "Battle",
-              params: {
-                  squad: boardMap[currentIndex].squad.squad,
-                  money: boardMap[currentIndex].squad.money,
-                  XP: boardMap[currentIndex].squad.XP,
-                  battle: "normal"
-              }
+                name: "Battle",
+                params: {
+                    squad: boardMap[mapLevel][currentIndex].squad.squad,
+                    money: boardMap[mapLevel][currentIndex].squad.money,
+                    XP: boardMap[mapLevel][currentIndex].squad.XP,
+                    battle: "boss"
+                }
             })
-          }
-          else
-            send("NONE")
-        } else {
-             if (dice === 1 || true) {
-                send("EXIST")
-                navigation.navigate({
-                    name: "Battle",
-                    params: {
-                        squad: boardMap[currentIndex].squad.squad,
-                        money: boardMap[currentIndex].squad.money,
-                        XP: boardMap[currentIndex].squad.XP,
-                        battle: "wondering"
-                    }
-                })
-            } else
-                send("NONE")
         }
         break;
       case "checkRoom":
-          if (roomType === "") {
-              // let room = CheckRoomInside(boardMap[currentIndex].type, dice)
-              let room = CheckRoomInside("statue", 6)
+          if(boardMap[mapLevel][currentIndex].type === "mirror") {
+            GetMirrorEvent(dice)
+          } else {
+              let room = CheckRoomInside(boardMap[mapLevel][currentIndex].type, dice)
               currentRoomType(room)
               setModalOption("nextState")
-          } else {
-              if(foutainTypeList.includes(roomType))
-                  GetFountainEvent(dice)
-              else if(altarTypeList.includes(roomType))
-                  GetAltarEvent(dice)
-              else if(artTypeList.includes(roomType))
-                  GetArtEvent(dice)
-              else if(furnitureTypeList.includes(roomType))
-                  GetFurnitureEvent(dice)
-              else if(statueTypeList.includes(roomType))
-                  GetStatueEvent(dice)
-              else if(trapdoorTypeList.includes(roomType))
-                  GetTrapdoorEvent(dice)
+              send("NEXT")
           }
           break;
-          case "getGold":
-              if(treasureGoldTable[9][0] >= dice)
-                  send("EXIST")
-              else
-                  send("NEXT")
-              setModalOption("nextState")
-              break;
-          case "findGold":
-              mod_board = JSON.parse(JSON.stringify(boardMap));
-              let mult = treasureGoldTable[9][1]
-              mod_board[currentIndex].squad.money += dice * mult
-              changeBoardMap(mod_board)
-              navigation.setParams({
-                money: mod_board[currentIndex].squad.money,
-              });
+      case "checkRoomType":
+          if(foutainTypeList.includes(roomType))
+              GetFountainEvent(dice)
+          else if(altarTypeList.includes(roomType))
+              GetAltarEvent(dice)
+          else if(artTypeList.includes(roomType))
+              GetArtEvent(dice)
+          else if(furnitureTypeList.includes(roomType))
+              GetFurnitureEvent(dice)
+          else if(statueTypeList.includes(roomType))
+              GetStatueEvent(dice)
+          else if(trapdoorTypeList.includes(roomType))
+              GetTrapdoorEvent(dice)
+          break;
+      case "getGold":
+          if(treasureGoldTable[9][0] >= dice)
+              send("EXIST")
+          else
               send("NEXT")
+          setModalOption("nextState")
+          break;
+      case "findGold":
+          mod_board = JSON.parse(JSON.stringify(boardMap));
+          let mult = treasureGoldTable[9][1]
+          mod_board[mapLevel][currentIndex].squad.money += dice * mult
+          changeBoardMap(mod_board[mapLevel])
+          navigation.setParams({
+            money: mod_board[mapLevel][currentIndex].squad.money,
+          });
+          send("NEXT")
+          setModalOption("nextState")
+          break;
+      case "getJewelry":
+          if(treasureJewelryTable[9][0] >= dice)
+              send("EXIST")
+          else
+              send("NEXT")
+          setModalOption("nextState")
+          break;
+      case "findJewelry":
+          if (jewelry_amount === 0)
+              jewelry_amount = dice;
+          else {
+              updateJewelryCost(jewelryTable(dice[0] + dice[1]))
+              send("NEXT")
+          }
+          setModalOption("nextState")
+          break;
+      case "getMagicItem":
+          if(treasureMagicItemTable[9][0] >= dice)
+              send("EXIST")
+          else {
+              setModalVisible(false)
+              send("DONE")
+          }
+          setModalOption("nextState")
+          break;
+      case "findMagicItem":
+          if (magicItemsAmount === 0) {
+              magicItemsAmount = halfDiceRoll(dice)
               setModalOption("nextState")
               break;
-          case "getJewelry":
-              if(treasureJewelryTable[9][0] >= dice)
-                  send("EXIST")
-              else
+          }
+          else if (magicItem.type === undefined) {
+              let recievedMagicItem = getMagicItem(dice[0], dice[1])
+              updateMagicItem(getMagicItem(dice[0], dice[1]))
+              if (recievedMagicItem.type !== "Weapon" && recievedMagicItem.effect !== "Throw twice") {
                   send("NEXT")
-              setModalOption("nextState")
-              break;
-          case "findJewelry":
-              if (jewelry_amount === 0)
-                  jewelry_amount = dice;
-              else {
-                  updateJewelryCost(jewelryTable(dice[0] + dice[1]))
-                  send("NEXT")
-              }
-              setModalOption("nextState")
-              break;
-          case "getMagicItem":
-              if(treasureMagicItemTable[9][0] >= dice)
-                  send("EXIST")
-              else {
-                  setModalVisible(false)
-                  send("DONE")
-              }
-              setModalOption("nextState")
-              break;
-          case "findMagicItem":
-              if (magicItemsAmount === 0) {
-                  magicItemsAmount = halfDiceRoll(dice)
-                  setModalOption("nextState")
-                  break;
-              }
-              else if (magicItem.type === undefined) {
-                  let recievedMagicItem = getMagicItem(dice[0], dice[1])
-                  updateMagicItem(getMagicItem(dice[0], dice[1]))
-                  if (recievedMagicItem.type !== "Weapon" && recievedMagicItem.effect !== "Throw twice") {
-                      send("NEXT")
-                  } else {
-                      setModalOption("nextState")
-                  }
-                  setModalOption("nextState")
-                  break;
               } else {
-                  if (magicItem.type === "Weapon") {
-                      if (dice === 6) {
-                          changeNumOfDices((num) => num + 1)
-                      } else {
-                          updateReceivedWeaponDamage((dmg) => dmg + weaponBonus(dice))
-                          if (numOfDices > 1)
-                              changeNumOfDices((num) => num - 1)
-                          else {
-                              send("NEXT")
-                          }
-                      }
-                  } else if (magicItem.type === "Armor") {
-                      if (dice === 6) {
-                          changeNumOfDices((num) => num + 1)
-                      } else {
-                          updateMagicItem((item) => item.effect === "Throw twice" ? item.effect = magicItemsTable[1][dice - 1] : item.effect + magicItemsTable[1][dice - 1])
-                          if (numOfDices > 1)
-                              changeNumOfDices((num) => num - 1)
-                          else {
-                              send("NEXT")
-                          }
+                  setModalOption("nextState")
+              }
+              setModalOption("nextState")
+              break;
+          } else {
+              if (magicItem.type === "Weapon") {
+                  if (dice === 6) {
+                      changeNumOfDices((num) => num + 1)
+                  } else {
+                      updateReceivedWeaponDamage((dmg) => dmg + weaponBonus(dice))
+                      if (numOfDices > 1)
+                          changeNumOfDices((num) => num - 1)
+                      else {
+                          send("NEXT")
                       }
                   }
-                  setModalOption("nextState")
-                  break;
+              } else if (magicItem.type === "Armor") {
+                  if (dice === 6) {
+                      changeNumOfDices((num) => num + 1)
+                  } else {
+                      updateMagicItem((item) => item.effect === "Throw twice" ? item.effect = magicItemsTable[1][dice - 1] : item.effect + magicItemsTable[1][dice - 1])
+                      if (numOfDices > 1)
+                          changeNumOfDices((num) => num - 1)
+                      else {
+                          send("NEXT")
+                      }
+                  }
               }
+              setModalOption("nextState")
+              break;
+          }
     }
   }
 
@@ -630,114 +645,106 @@ export default function Board({route, navigation}) {
       let mod_board = JSON.parse(JSON.stringify(boardMap));
         switch (roomType){
             case "Poison":
-                mod_board[currentIndex].squad.squad[memberIndex].WP -= halfDiceRoll(dice)
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP -= halfDiceRoll(dice)
                 changeBoardMap(mod_board);
                 break;
             case "Potion":
-                mod_board[currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(3, dice))
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(3, dice))
                 changeBoardMap(mod_board);
                 break;
             case "Alcohol":
-                mod_board[currentIndex].squad.squad[memberIndex].CB > 2 ? mod_board[currentIndex].squad.squad[memberIndex].CB -= 2 : mod_board[currentIndex].squad.squad[memberIndex].CB = 0
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex].CB > 2 ? mod_board[mapLevel][currentIndex].squad.squad[memberIndex].CB -= 2 : mod_board[mapLevel][currentIndex].squad.squad[memberIndex].CB = 0
                 changeBoardMap(mod_board);
                 break;
             case "Diamond":
-                mod_board[currentIndex].squad.squad[memberIndex].Treasure.push(jewelryTable(dice[0] + dice [2] + 2))
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Treasure.push(jewelryTable(dice[0] + dice [2] + 2))
                 changeBoardMap(mod_board);
                 break;
             case "Water":
                 break;
             case "Blood":
-                mod_board[currentIndex].squad.squad[memberIndex].CB < 2  ? mod_board[currentIndex].squad.squad[memberIndex].CB -= 1 : mod_board[currentIndex].squad.squad[memberIndex].CB = 0
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex].CB < 2  ? mod_board[mapLevel][currentIndex].squad.squad[memberIndex].CB -= 1 : mod_board[mapLevel][currentIndex].squad.squad[memberIndex].CB = 0
                 changeBoardMap(mod_board);
         }
         navigation.setParams({
-              squad: mod_board[currentIndex].squad.squad
+              squad: mod_board[mapLevel][currentIndex].squad.squad
           })
+        setModalVisible(false)
         send("NEXT")
-        currentRoomType("")
     }
 
     function GetStatueEvent(dice){
       let mod_board = JSON.parse(JSON.stringify(boardMap));
-      let resistance = mod_board[currentIndex].squad.squad[memberIndex].RV
+      let resistance = mod_board[mapLevel][currentIndex].squad.squad[memberIndex].RV
         switch (roomType){
             case "Medusa":
                 if(dice > resistance) {
-                    mod_board[currentIndex].squad.squad[memberIndex].Effects.push("Stone")
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Effects.push("Stone")
                     changeBoardMap(mod_board)
                     navigation.setParams({
-                        squad: mod_board[currentIndex].squad.squad
+                        squad: mod_board[mapLevel][currentIndex].squad.squad
                     })
                 }
                 send("BATTLE")
                 navigation.navigate({
                   name: "Battle",
                   params: {
-                      squad: boardMap[currentIndex].squad.squad,
-                      money: boardMap[currentIndex].squad.money,
-                      XP: boardMap[currentIndex].squad.XP,
+                      squad: boardMap[mapLevel][currentIndex].squad.squad,
+                      money: boardMap[mapLevel][currentIndex].squad.money,
+                      XP: boardMap[mapLevel][currentIndex].squad.XP,
                       battle: "medusa"
                   }
                 });
-                currentRoomType("")
                 break;
             case "Diamond":
-                mod_board[currentIndex].squad.squad[memberIndex].Treasure.push(jewelryTable(rollDice() + rollDice() + 2))
-                mod_board[currentIndex].squad.squad[memberIndex].Treasure.push(jewelryTable(rollDice() + rollDice() + 2))
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Treasure.push(jewelryTable(rollDice() + rollDice() + 2))
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Treasure.push(jewelryTable(rollDice() + rollDice() + 2))
                 changeBoardMap(mod_board);
                 navigation.setParams({
-                    squad: mod_board[currentIndex].squad.squad
+                    squad: mod_board[mapLevel][currentIndex].squad.squad
                 })
-                setModalVisible(false)
-                currentRoomType("")
                 break;
             case "Medallion":
-                mod_board[currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(5, dice))
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(5, dice))
                 changeBoardMap(mod_board);
                 navigation.setParams({
-                    squad: mod_board[currentIndex].squad.squad
+                    squad: mod_board[mapLevel][currentIndex].squad.squad
                 })
-                setModalVisible(false)
-                currentRoomType("")
                 break;
             case "Demon":
                 let demonType = CheckRoomInside("altar", dice)
                 currentRoomType(demonType)
                 break;
             case "Talisman":
-                mod_board[currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(4, dice))
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(4, dice))
                 changeBoardMap(mod_board);
                 navigation.setParams({
-                    squad: mod_board[currentIndex].squad.squad
+                    squad: mod_board[mapLevel][currentIndex].squad.squad
                 })
-                setModalVisible(false)
-                currentRoomType("")
                 break;
             case "Unknown":
                 if(dice > resistance) {
-                    mod_board[currentIndex].squad.squad[memberIndex].Effects.push("Enemy")
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Effects.push("Enemy")
                     navigation.setParams({
-                        squad: mod_board[currentIndex].squad.squad
+                        squad: mod_board[mapLevel][currentIndex].squad.squad
                     })
                     changeBoardMap(mod_board);
                     send("BATTLE")
                     navigation.navigate({
                       name: "Battle",
                       params: {
-                          squad: mod_board[currentIndex].squad.squad,
-                          money: boardMap[currentIndex].squad.money,
-                          XP: boardMap[currentIndex].squad.XP,
+                          squad: mod_board[mapLevel][currentIndex].squad.squad,
+                          money: boardMap[mapLevel][currentIndex].squad.money,
+                          XP: boardMap[mapLevel][currentIndex].squad.XP,
                           battle: "unknown"
                       }
                     });
                 } else
                     send("NEXT")
-                setModalVisible(false)
-                currentRoomType("")
                 break;
         }
         setModalOption("nextState")
+        setModalVisible(false)
     }
 
     function GetTrapdoorEvent(dice){
@@ -748,15 +755,15 @@ export default function Board({route, navigation}) {
                 break;
             case "Room":
                 let singleHeroSquadRoom = Array(9).fill({})
-                singleHeroSquadRoom[0] = boardMap[currentIndex].squad.squad[memberIndex]
+                singleHeroSquadRoom[0] = boardMap[mapLevel][currentIndex].squad.squad[memberIndex]
                 if (dice < 4) {
                 send("BATTLE")
                 navigation.navigate({
                     name: "Battle",
                     params: {
                         squad: singleHeroSquadRoom,
-                        money: boardMap[currentIndex].squad.money,
-                        XP: boardMap[currentIndex].squad.XP,
+                        money: boardMap[mapLevel][currentIndex].squad.money,
+                        XP: boardMap[mapLevel][currentIndex].squad.XP,
                         battle: "normal"
                     }
                 })
@@ -765,57 +772,56 @@ export default function Board({route, navigation}) {
                 break;
             case "Hatch":
                 let singleHeroSquad = Array(9).fill({})
-                singleHeroSquad[0] = boardMap[currentIndex].squad.squad[memberIndex]
+                singleHeroSquad[0] = boardMap[mapLevel][currentIndex].squad.squad[memberIndex]
                 send("BATTLE")
                 navigation.navigate({
                       name: "Battle",
                       params: {
                           squad: singleHeroSquad,
-                          money: boardMap[currentIndex].squad.money,
-                          XP: boardMap[currentIndex].squad.XP,
+                          money: boardMap[mapLevel][currentIndex].squad.money,
+                          XP: boardMap[mapLevel][currentIndex].squad.XP,
                           battle: "hatch"
                       }
                     });
                 setModalVisible(false)
                 break;
             case "Hellgate":
-                trappedHeroes.push(mod_board[currentIndex].squad.squad[memberIndex])
-                mod_board[currentIndex].squad.squad[memberIndex] = {}
+                trappedHeroes.push(mod_board[mapLevel][currentIndex].squad.squad[memberIndex])
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex] = {}
                 changeBoardMap(mod_board);
                 navigation.setParams({
-                    squad: mod_board[currentIndex].squad.squad
+                    squad: mod_board[mapLevel][currentIndex].squad.squad
                 })
                 send("NEXT")
                 setModalVisible(false)
                 break;
         }
         setModalOption("nextState")
-        currentRoomType("")
     }
 
     function GetAltarEvent(dice){
       let mod_board = JSON.parse(JSON.stringify(boardMap));
-      let resistance = mod_board[currentIndex].squad.squad[memberIndex].RV
+      let resistance = mod_board[mapLevel][currentIndex].squad.squad[memberIndex].RV
         switch (roomType){
             case "Alloces":
                 if(dice > resistance)
-                    mod_board[currentIndex].squad.squad[memberIndex].CB -= 1
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].CB -= 1
                 else
-                    mod_board[currentIndex].squad.squad[memberIndex].Effects.push("NoWSpellCost")
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Effects.push("NoWSpellCost")
                 changeBoardMap(mod_board);
                 break;
             case "Vassago":
                 if(dice > resistance)
-                    mod_board[currentIndex].squad.squad[memberIndex].Skill = mod_board[currentIndex].squad.squad[memberIndex].Skill.filter((skill) => {return skill.Name !== "Detrap"});
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Skill = mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Skill.filter((skill) => {return skill.Name !== "Detrap"});
                 else {
-                    let skillsList = mod_board[currentIndex].squad.squad[memberIndex].Skill;
+                    let skillsList = mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Skill;
                     if (skillsList.some((skill) => skill.Name === "Detrap")){
                         let skillIndex = skillsList.findIndex((skill) => skill.Name === "Detrap")
                         skillsList[skillIndex].Value < 3 ?
-                            mod_board[currentIndex].squad.squad[memberIndex].Skill[skillIndex].Value += 3 :
-                            mod_board[currentIndex].squad.squad[memberIndex].Skill[skillIndex].Value = 5
+                            mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Skill[skillIndex].Value += 3 :
+                            mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Skill[skillIndex].Value = 5
                     } else {
-                        mod_board[currentIndex].squad.squad[memberIndex].Skill.push({Name:"Detrap", Value: 3})
+                        mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Skill.push({Name:"Detrap", Value: 3})
                     }
                 }
                 changeBoardMap(mod_board);
@@ -823,22 +829,22 @@ export default function Board({route, navigation}) {
             case "Anvas":
                 if(dice > resistance) {
                     let damage = halfDiceRoll(rollDice()) * 2
-                    mod_board[currentIndex].squad.squad[memberIndex].WP -= damage
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP -= damage
                 }
                 else {
-                    if (!mod_board[currentIndex].squad.squad[memberIndex].Spells.includes("Thunderbolt"))
-                        mod_board[currentIndex].squad.squad[memberIndex].Spells.push("Thunderbolt")
-                    mod_board[currentIndex].squad.squad[memberIndex].Effects.push("ThunderboltLessCost")
+                    if (!mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Spells.includes("Thunderbolt"))
+                        mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Spells.push("Thunderbolt")
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Effects.push("ThunderboltLessCost")
                 }
-                changeBoardMap(mod_board);
+                changeBoardMap(mod_board[mapLevel]);
                 break;
             case "Malthus":
                 if(dice > resistance) {
                     let damage = rollDice() + rollDice() + 2
-                    mod_board[currentIndex].squad.squad[memberIndex].WP -= damage
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP -= damage
                 }
                 else
-                    mod_board[currentIndex].squad.squad[memberIndex].Spells.push("Wrath of God")
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Spells.push("Wrath of God")
                 changeBoardMap(mod_board);
                 break;
             case "Lerae":
@@ -846,31 +852,31 @@ export default function Board({route, navigation}) {
                     let damage = battleResult(undefined, rollDice(), "Bow") +
                         + battleResult(undefined, rollDice(), "Bow") +
                         + battleResult(undefined, rollDice(), "Bow")
-                    mod_board[currentIndex].squad.squad[memberIndex].WP -= damage
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP -= damage
                 }
                 else{
-                    let weaponSkillList = mod_board[currentIndex].squad.squad[memberIndex].WS;
+                    let weaponSkillList = mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WS;
                     if (weaponSkillList.some((skill) => skill.Type === "Bow" && skill.Magic === undefined)){
                         let weaponSkillIndex = weaponSkillList.findIndex((skill) => skill.Type === "Bow" && skill.Magic === undefined)
-                        mod_board[currentIndex].squad.squad[memberIndex].WS[weaponSkillIndex].Damage += 3
+                        mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WS[weaponSkillIndex].Damage += 3
                     } else {
-                        mod_board[currentIndex].squad.squad[memberIndex].WS.push({"Type": "Bow", "Damage": 3})
+                        mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WS.push({"Type": "Bow", "Damage": 3})
                     }
                 }
                 changeBoardMap(mod_board);
                 break;
             case "Asmodus":
                 if(dice > resistance)
-                    mod_board[currentIndex].squad.squad[memberIndex].MP = mod_board[currentIndex].squad.squad[memberIndex].MP.reduce((a,b) => {
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].MP = mod_board[mapLevel][currentIndex].squad.squad[memberIndex].MP.reduce((a,b) => {
                         return [...a, b === 0 ? b : b - 1]
                     }, [])
                 else
-                    mod_board[currentIndex].squad.squad[memberIndex].CB += 3
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].CB += 3
                 changeBoardMap(mod_board);
                 break;
         }
         navigation.setParams({
-              squad: mod_board[currentIndex].squad.squad
+              squad: mod_board[mapLevel][currentIndex].squad.squad
           })
         send("NEXT")
         setModalVisible(false)
@@ -882,14 +888,16 @@ export default function Board({route, navigation}) {
         let mod_board = JSON.parse(JSON.stringify(boardMap));
         switch (roomType){
             case "Gobelin":
-                mod_board[currentIndex].squad.squad[memberIndex].Inventory.push(jewelryTable(dice + 4))
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Inventory.push(jewelryTable(dice + 4))
                 changeBoardMap(mod_board);
                 send("NEXT")
                 setModalVisible(false)
                 setModalOption("nextState")
-                currentRoomType("")
                 break;
             case "Drawing":
+                setModalVisible(false)
+                setModalOption("nextState")
+                send("NEXT")
                 break;
             case "Sculpture":
                 let sculptureType = CheckRoomInside("statue", dice)
@@ -897,12 +905,11 @@ export default function Board({route, navigation}) {
                 setModalOption("nextState")
                 break;
             case "Cristal":
-                mod_board[currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(dice[0] < 4 ? 4 : 5, dice[1]))
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(dice[0] < 4 ? 4 : 5, dice[1]))
                 changeBoardMap(mod_board);
                 send("NEXT")
                 setModalVisible(false)
                 setModalOption("nextState")
-                currentRoomType("")
                 break;
             case "Icon":
                 let demonType = CheckRoomInside("altar", dice)
@@ -910,17 +917,16 @@ export default function Board({route, navigation}) {
                 setModalOption("nextState")
                 break;
             case "Manuscript":
-                if(!mod_board[currentIndex].squad.squad[memberIndex].Spells.includes("Wrath of God"))
-                    mod_board[currentIndex].squad.squad[memberIndex].Spells.push("Wrath of God")
+                if(!mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Spells.includes("Wrath of God"))
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Spells.push("Wrath of God")
                 changeBoardMap(mod_board);
                 send("NEXT")
                 setModalVisible(false)
                 setModalOption("nextState")
-                currentRoomType("")
                 break;
         }
         navigation.setParams({
-              squad: mod_board[currentIndex].squad.squad
+              squad: mod_board[mapLevel][currentIndex].squad.squad
           })
     }
     function GetFurnitureEvent(dice){
@@ -931,9 +937,9 @@ export default function Board({route, navigation}) {
                 navigation.navigate({
                   name: "Battle",
                   params: {
-                      squad: boardMap[currentIndex].squad.squad,
-                      money: boardMap[currentIndex].squad.money,
-                      XP: boardMap[currentIndex].squad.XP,
+                      squad: boardMap[mapLevel][currentIndex].squad.squad,
+                      money: boardMap[mapLevel][currentIndex].squad.money,
+                      XP: boardMap[mapLevel][currentIndex].squad.XP,
                       battle: "vampire"
                   }
                 });
@@ -942,12 +948,12 @@ export default function Board({route, navigation}) {
                 break;
             case "Closet":
                 if(dice < 4)
-                    mod_board[currentIndex].squad.squad[memberIndex].WP -= halfDiceRoll(rollDice())
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP -= halfDiceRoll(rollDice())
                 else
-                    mod_board[currentIndex].squad.squad[memberIndex].Spells.push("Resurrect")
+                    mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Spells.push("Resurrect")
                 changeBoardMap(mod_board);
                 navigation.setParams({
-                    squad: mod_board[currentIndex].squad.squad
+                    squad: mod_board[mapLevel][currentIndex].squad.squad
                 })
                 send("NEXT")
                 setModalVisible(false)
@@ -956,10 +962,10 @@ export default function Board({route, navigation}) {
                 send("TRAP")
                 break;
             case "Bed":
-                mod_board[currentIndex].squad.squad[memberIndex].WP += halfDiceRoll(dice)
+                mod_board[mapLevel][currentIndex].squad.squad[memberIndex].WP += halfDiceRoll(dice)
                 changeBoardMap(mod_board);
                 navigation.setParams({
-                    squad: mod_board[currentIndex].squad.squad
+                    squad: mod_board[mapLevel][currentIndex].squad.squad
                 })
                 send("NEXT")
                 setModalVisible(false)
@@ -967,26 +973,77 @@ export default function Board({route, navigation}) {
             case "Harpsichord":
                 break;
             case "Mirror":
+                GetMirrorEvent(dice)
                 break;
         }
-        currentRoomType("")
         setModalOption("nextState")
     }
 
+  function GetMirrorEvent(){
+      if(levelHellGate === null){
+          let level = FindHellGateLevel(dice)
+          updateLevelHellGate(level)
+          setModalOption("nextState")
+          if(mapLevel !== level){
+              send("NEXT")
+              send("NEXT")
+              setModalVisible(false)
+          }
+      } else if (numOfTilesHellGate === null) {
+          updateNumOfTilesHellGate(FindHellGateDist(dice))
+          setModalOption("nextState")
+          send("NEXT")
+          send("NEXT")
+          setModalVisible(false)
+      }
+  }
+
   function UseStairsDown(){
-    initBoard[mapLevel] = JSON.parse(JSON.stringify(boardMap))
-    initBoard[mapLevel + 1][currentIndex] = boardMap[currentIndex]
-    changeBoardMap(initBoard[mapLevel + 1])
-    updateMapLevel((level) => level + 1)
-    send("NEXT")
+      let mod_board = JSON.parse(JSON.stringify(boardMap))
+      if(mod_board[mapLevel + 1][currentIndex].type !== "stairs") {
+          if (mod_board[mapLevel + 1][currentIndex].type === undefined)
+              mod_board[mapLevel + 1][currentIndex] = JSON.parse(JSON.stringify(mod_board[mapLevel][currentIndex]))
+          else{
+              Alert.alert("")
+          }
+          mod_board[mapLevel][currentIndex].squad = {};
+          changeBoardMap(mod_board)
+          send("NEXT")
+          send("NEXT")
+          setModalVisible(false)
+      }
+      else {
+          mod_board[mapLevel + 1][currentIndex].squad = JSON.parse(JSON.stringify(mod_board[mapLevel][currentIndex].squad))
+          mod_board[mapLevel][currentIndex].squad = {};
+          changeBoardMap(mod_board)
+          send("NEXT")
+          send("NEXT")
+          setModalVisible(false)
+      }
   }
 
   function UseStairsUp(){
-    initBoard[mapLevel] = JSON.parse(JSON.stringify(boardMap))
-    initBoard[mapLevel - 1][currentIndex] = boardMap[currentIndex]
-    changeBoardMap(initBoard[mapLevel - 1])
-    updateMapLevel((level) => level - 1)
-    send("NEXT")
+    let mod_board = JSON.parse(JSON.stringify(boardMap))
+      if(mod_board[mapLevel - 1][currentIndex].type !== "stairs") {
+          if (mod_board[mapLevel - 1][currentIndex].type === undefined)
+              mod_board[mapLevel - 1][currentIndex] = JSON.parse(JSON.stringify(mod_board[mapLevel][currentIndex]))
+          else{
+              Alert.alert("")
+          }
+          mod_board[mapLevel][currentIndex].squad = {};
+          changeBoardMap(mod_board)
+          send("NEXT")
+          send("NEXT")
+          setModalVisible(false)
+      }
+      else {
+          mod_board[mapLevel - 1][currentIndex].squad = JSON.parse(JSON.stringify(mod_board[mapLevel][currentIndex].squad))
+          mod_board[mapLevel][currentIndex].squad = {};
+          changeBoardMap(mod_board)
+          send("NEXT")
+          send("NEXT")
+          setModalVisible(false)
+      }
   }
 
   function NextStateTemplate() {
@@ -1013,7 +1070,7 @@ export default function Board({route, navigation}) {
               <FlatList
                   style={styles.flatlist}
                   scrollEnabled={false}
-                  data={boardMap[currentIndex].squad.squad}
+                  data={boardMap[mapLevel][currentIndex].squad.squad}
                   numColumns={3}
                   renderItem={({item, index}) => (
                       <View>
@@ -1038,7 +1095,7 @@ export default function Board({route, navigation}) {
               <View>
                 <Text style={styles.modalText}>Try to detrap!</Text>
               </View>
-        )
+          )
       case "findType":
           return(
               <View>
@@ -1054,13 +1111,13 @@ export default function Board({route, navigation}) {
       case "chooseRoomMember":
           return (
               <View>
-                <Text style={styles.modalText}>There is some kind of a {boardMap[currentIndex].type} in this room!</Text>
+                <Text style={styles.modalText}>There is some kind of a {boardMap[mapLevel][currentIndex].type} in this room!</Text>
                 <Text style={styles.modalText}>Choose character to check it!</Text>
                 <View style={styles.list}>
                   <FlatList
                       style={styles.flatlist}
                       scrollEnabled={false}
-                      data={boardMap[currentIndex].squad.squad}
+                      data={boardMap[mapLevel][currentIndex].squad.squad}
                       numColumns={3}
                       renderItem={({item, index}) => (
                           <View>
@@ -1082,41 +1139,56 @@ export default function Board({route, navigation}) {
               </View>
           )
       case "checkRoom":
-          if(roomType === "")
-              return(
+          if(boardMap[mapLevel][currentIndex].type === "stairs"){
+               return (
                   <View>
-                    <Text style={styles.modalText}>Check what kind of {boardMap[currentIndex].type} that is!</Text>
+                      <Text style={styles.modalText}>There are stairs in this room. Where do you want to go?</Text>
                   </View>
               )
-          else{
-              return RoomTemplates()
+          } else if(boardMap[mapLevel][currentIndex].type === "mirror"){
+               return (
+                  <View>
+                    <Text style={styles.modalText}>There is a mirror on the wall.</Text>
+                    <Text style={styles.modalText}>It can show how far are you from the Hell Gates.</Text>
+                    <Text style={styles.modalText}>Roll dice to find the {levelHellGate === null ? "maze level where Hell Gates are!" : "distance from Hell Gates!"}</Text>
+                </View>
+              )
+          } else {
+              return (
+                  <View>
+                      <Text style={styles.modalText}>Check what kind of {boardMap[mapLevel][currentIndex].type} that
+                          is!</Text>
+                  </View>
+              )
           }
-          case "getGold":
-              return(
-                  <View>
-                      <Text style={styles.modalText}>Check if there is gold!</Text>
-                  </View>
-              )
-          case "findGold":
-              return(
-                  <View>
-                      <Text style={styles.modalText}>Check how much gold hero has found! </Text>
-                  </View>
-              )
-          case "getJewelry":
-              return(
-                  <View>
-                      <Text style={styles.modalText}>Check if there are any jewelries!</Text>
-                  </View>
-              )
-          case "findJewelry":
-              return(
-                  <View>
-                      <Text style={styles.modalText}>{jewelry_amount === 0 ? "Check how many jewelries founded!" : "Check the price of found jewelries!"}</Text>
-                  </View>
-              )
+      case "checkRoomType":
+              return RoomTemplates()
+      case "getGold":
+          return(
+              <View>
+                  <Text style={styles.modalText}>Check if there is gold!</Text>
+              </View>
+          )
+      case "findGold":
+          return(
+              <View>
+                  <Text style={styles.modalText}>Check how much gold hero has found! </Text>
+              </View>
+          )
+      case "getJewelry":
+          return(
+              <View>
+                  <Text style={styles.modalText}>Check if there are any jewelries!</Text>
+              </View>
+          )
+      case "findJewelry":
+          return(
+              <View>
+                  <Text style={styles.modalText}>{jewelry_amount === 0 ? "Check how many jewelries founded!" : "Check the price of found jewelries!"}</Text>
+              </View>
+          )
       case "assignJewelry":
-              let member_wallet = boardMap[currentIndex].squad.squad[memberIndex].Treasure.reduce((a, b) => a + b, 0)
+              let member_wallet = boardMap[mapLevel][currentIndex].squad.squad[memberIndex].Treasure.reduce((a, b) => a + b, 0)
               return(
                   <View>
                       <Text style={styles.modalText}>Hero gets this jewelry!</Text>
@@ -1124,60 +1196,60 @@ export default function Board({route, navigation}) {
                       <Text style={styles.modalText}>Found jewelry costs {jewelryCost} golds.</Text>
                   </View>
               )
-          case "getMagicItem":
-              return(
+      case "getMagicItem":
+          return(
+              <View>
+                  <Text style={styles.modalText}>Check if there are any Magic Items!</Text>
+              </View>
+          )
+      case "findMagicItem":
+          if(magicItemsAmount === 0) {
+              return (
                   <View>
-                      <Text style={styles.modalText}>Check if there are any Magic Items!</Text>
+                      <Text style={styles.modalText}>Check how many magic items there are!</Text>
                   </View>
               )
-          case "findMagicItem":
-              if(magicItemsAmount === 0) {
-                  return (
-                      <View>
-                          <Text style={styles.modalText}>Check how many magic items there are!</Text>
-                      </View>
-                  )
-              } else if (magicItem.type === undefined){
-                  return(
-                      <View>
-                          <Text style={styles.modalText}>Check what kind of magic item there is!</Text>
-                      </View>
-                  )
-              } else if (magicItem.type === "Weapon"){
-                  return(
-                      <View>
-                          <Text style={styles.modalText}>Find the damage for {magicItem.effect}</Text>
-                          <Text style={styles.modalText}>Current damage: {receivedWeaponDamage}</Text>
-                          <Text style={styles.modalText}>Remaining dice rolls: {numOfDices}</Text>
-                      </View>
-                  )
-              } else if (magicItem.type === "Armor")
-                  return(
-                      <View>
-                          <Text style={styles.modalText}>Find the resistance of Armor!</Text>
-                          <Text style={styles.modalText}>Current resistance value: {magicItem.effect}</Text>
-                          <Text style={styles.modalText}>Remaining dice rolls: {numOfDices}</Text>
-                      </View>
-                  )
-          case "assignMagicItem":
-              let member = boardMap[currentIndex].squad.squad[memberIndex]
-              if (magicItem.type !== "Weapon") {
-                  return (
-                      <View>
-                          <Text style={styles.modalText}>Hero gets the {magicItem.type} of {magicItem.effect}!</Text>
-                      </View>
-                  )
-              } else {
-                  return (
-                      <View>
-                          <Text style={styles.modalText}>Hero gets the {magicItem.effect} +{receivedWeaponDamage}!</Text>
-                          <Text style={styles.modalText}>Current hero's weapons: {member.Weapon[0]}, {member.Weapon[1]}</Text>
-                          <Text style={styles.modalText}>Current weapon skills: {member.WS.map((weaponSkill) =>  {return "{" + weaponSkill.Type + ": +" + weaponSkill.Damage + (weaponSkill.Magic ?", Magic} " : "} ")})}</Text>
-                          <Text style={styles.modalText}>REMEMBER: only magic weapon skill will be removed, common skills will remain.</Text>
-                          <Text style={styles.modalText}>Do you accept it?</Text>
-                      </View>
-                  )
-              }
+          } else if (magicItem.type === undefined){
+              return(
+                  <View>
+                      <Text style={styles.modalText}>Check what kind of magic item there is!</Text>
+                  </View>
+              )
+          } else if (magicItem.type === "Weapon"){
+              return(
+                  <View>
+                      <Text style={styles.modalText}>Find the damage for {magicItem.effect}</Text>
+                      <Text style={styles.modalText}>Current damage: {receivedWeaponDamage}</Text>
+                      <Text style={styles.modalText}>Remaining dice rolls: {numOfDices}</Text>
+                  </View>
+              )
+          } else if (magicItem.type === "Armor")
+              return(
+                  <View>
+                      <Text style={styles.modalText}>Find the resistance of Armor!</Text>
+                      <Text style={styles.modalText}>Current resistance value: {magicItem.effect}</Text>
+                      <Text style={styles.modalText}>Remaining dice rolls: {numOfDices}</Text>
+                  </View>
+              )
+      case "assignMagicItem":
+          let member = boardMap[mapLevel][currentIndex].squad.squad[memberIndex]
+          if (magicItem.type !== "Weapon") {
+              return (
+                  <View>
+                      <Text style={styles.modalText}>Hero gets the {magicItem.type} of {magicItem.effect}!</Text>
+                  </View>
+              )
+          } else {
+              return (
+                  <View>
+                      <Text style={styles.modalText}>Hero gets the {magicItem.effect} +{receivedWeaponDamage}!</Text>
+                      <Text style={styles.modalText}>Current hero's weapons: {member.Weapon[0]}, {member.Weapon[1]}</Text>
+                      <Text style={styles.modalText}>Current weapon skills: {member.WS.map((weaponSkill) =>  {return "{" + weaponSkill.Type + ": +" + weaponSkill.Damage + (weaponSkill.Magic ?", Magic} " : "} ")})}</Text>
+                      <Text style={styles.modalText}>REMEMBER: only magic weapon skill will be removed, common skills will remain.</Text>
+                      <Text style={styles.modalText}>Do you accept it?</Text>
+                  </View>
+              )
+          }
   }
 }
 
@@ -1197,7 +1269,7 @@ function GetJewelry() {
 }
 
 function RoomTemplates() {
-      if(boardMap[currentIndex].type === "stairs")
+      if(boardMap[mapLevel][currentIndex].type === "stairs")
           return(
                 <View>
                     <Text style={styles.modalText}>There are stairs in this room!</Text>
@@ -1206,15 +1278,14 @@ function RoomTemplates() {
                 </View>
           )
 
-      else if (boardMap[currentIndex].type === "mirror" || roomType === "Mirror")
+      else if (boardMap[mapLevel][currentIndex].type === "mirror" || roomType === "Mirror")
           return(
                 <View>
                     <Text style={styles.modalText}>There is a mirror on the wall.</Text>
                     <Text style={styles.modalText}>It can show how far are you from the Hell Gates.</Text>
-                    <Text style={styles.modalText}>Roll dice to find the {}</Text>
+                    <Text style={styles.modalText}>Roll dice to find the {levelHellGate === null ? "maze level where Hell Gates are!" : "distance from Hell Gates!"}</Text>
                 </View>
           )
-
       else
           switch (roomType){
               case "Poison":
@@ -1240,7 +1311,7 @@ function RoomTemplates() {
               case "Diamond":
                   return(
                       <View>
-                        <Text style={styles.modalText}>There is something shines {boardMap[currentIndex].type === "fountain" ? "inside the fountain" : "on the bull's statue"}!</Text>
+                        <Text style={styles.modalText}>There is something shines {boardMap[mapLevel][currentIndex].type === "fountain" ? "inside the fountain" : "on the bull's statue"}!</Text>
                         <Text style={styles.modalText}>Hero has found diamonds!</Text>
                         <Text style={styles.modalText}>Roll dice to find their price!</Text>
                       </View>
@@ -1360,9 +1431,11 @@ function RoomTemplates() {
                   )
               case "Mirror":
                   return(
-                      <View>
-
-                      </View>
+                       <View>
+                            <Text style={styles.modalText}>There is a mirror on the wall.</Text>
+                            <Text style={styles.modalText}>It can show how far are you from the Hell Gates.</Text>
+                            <Text style={styles.modalText}>Roll dice to find the {levelHellGate === null ? "maze level where Hell Gates are!" : "distance from Hell Gates!"}</Text>
+                        </View>
                   )
               case "Alloces":
                   return(
@@ -1510,7 +1583,7 @@ function CollectMagicItem(num){
 
 
 function ModalButton() {
-  if(state.value === "checkRoom" && (boardMap[currentIndex].type === "stairs"))
+  if(state.value === "checkRoom" && (boardMap[mapLevel][currentIndex].type === "stairs"))
       return(
               <View style={{flexDirection:"row", paddingHorizontal:5}}>
                   <View style={{width:125}}>
@@ -1529,8 +1602,10 @@ function ModalButton() {
                   <View style={{width:125}}>
                       <TouchableOpacity
                         onPress={() => {
-                            if(mapLevel > 0)
+                            if(mapLevel > 0) {
                                 UseStairsUp()
+                                updateMapLevel((level) => level - 1)
+                            }
                             else
                                 Alert.alert("You are on the top level of the maze!")
 
@@ -1544,8 +1619,10 @@ function ModalButton() {
                   <View style={{width:125}}>
                       <TouchableOpacity
                         onPress={() => {
-                            if(mapLevel < 2)
+                            if(mapLevel < 2) {
                                 UseStairsDown()
+                                updateMapLevel((level) => level + 1)
+                            }
                             else
                                 Alert.alert("You are on the bottom level of the maze!")
                         }}
@@ -1618,7 +1695,7 @@ function ModalButton() {
                         onPress={() => CollectMagicItem(0)}
                       >
                           <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
-                              <Text style={styles.textStyle}>Replace {boardMap[currentIndex].squad.squad[memberIndex].Weapon[0]}!</Text>
+                              <Text style={styles.textStyle}>Replace {boardMap[mapLevel][currentIndex].squad.squad[memberIndex].Weapon[0]}!</Text>
                           </View>
                       </TouchableOpacity>
                   </View>
@@ -1627,7 +1704,7 @@ function ModalButton() {
                         onPress={() => CollectMagicItem(1)}
                       >
                           <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
-                              <Text style={styles.textStyle}>Replace {boardMap[currentIndex].squad.squad[memberIndex].Weapon[1]}!</Text>
+                              <Text style={styles.textStyle}>Replace {boardMap[mapLevel][currentIndex].squad.squad[memberIndex].Weapon[1]}!</Text>
                           </View>
                       </TouchableOpacity>
                   </View>
@@ -1731,15 +1808,15 @@ function ModalButton() {
     switch (state.value){
      case "idle":
         return(
-            <View style={{flexDirection:"row"}}>
-              <TouchableOpacity onPress={ChooseNewTile}>
-                <View style={styles.textButtonContainer}>
-                  <Text style={styles.textButton}>Choose New Tile!</Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={ChoosePrevTile}>
-                <View style={styles.textButtonContainer}>
-                  <Text style={styles.textButton}>Choose Previous!</Text>
+            <View style={{flexDirection:"row", justifyContent:"space-between"}}>
+                <TouchableOpacity onPress={ChoosePrevTile}>
+                    <View style={styles.textButtonContainer}>
+                        <Text style={styles.textButton}>Choose Previous!</Text>
+                    </View>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={ChooseNewTile}>
+                  <View style={styles.textButtonContainer}>
+                    <Text style={styles.textButton}>Choose New Tile!</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -1771,9 +1848,9 @@ function ModalButton() {
                 </View>
         )
       case "chooseAfterBattleAction":
-          if(boardMap[currentIndex].type !== "path")
+          if(boardMap[mapLevel][currentIndex].type !== "path")
             return(
-                <View style={{flexDirection:"row"}}>
+                <View style={{flexDirection:"row", justifyContent:"space-between"}}>
                   <TouchableOpacity onPress={() => send("NEXT")}>
                     <View style={styles.textButtonContainer}>
                       <Text style={styles.textButton}>Continue</Text>
@@ -1802,7 +1879,7 @@ function ModalButton() {
             )
       case "moveSquad":
         return(
-            <View style={{flexDirection:"row"}}>
+            <View style={{justifyContent:"center"}}>
               <TouchableOpacity onPress={() => MoveSquad(newIndex)}>
                 <View style={styles.textButtonContainer}>
                   <Text style={styles.textButton}>Move Squad!</Text>
@@ -1816,6 +1893,15 @@ function ModalButton() {
 
   return (
       <View style={styles.container}>
+          <View style={{height:50,flexDirection:"row", justifyContent:"space-between", alignItems:"center"}}>
+              <Text style={{fontSize:20}}>
+                  {levelHellGate === null ? null : "HG Level: " + levelHellGate}
+              </Text>
+              <Text style={{fontSize:20}}>
+                  {numOfTilesHellGate === null ? null : "HG Distance: " + numOfTilesHellGate}
+              </Text>
+
+          </View>
         <ModalScreen/>
         <View style={styles.zoomWrapper}>
             <ReactNativeZoomableView
@@ -1830,7 +1916,7 @@ function ModalButton() {
                 <FlatList
                     style={styles.flatlist}
                     scrollEnabled={false}
-                    data={boardMap}
+                    data={boardMap[mapLevel]}
                     numColumns={11}
                     renderItem={({item, index}) => (
                         <View>

@@ -31,8 +31,14 @@ board[25][25] = {type: "Start"}
 
 export const monsterDataset = require('../Database/monsters.json')
 
+export const spellDataset = require('../Database/table_of_spells.json')
+
 export const monst = (name => monsterDataset.find(m => {
   return m.Name === name;
+}))
+
+export const getSpell = (name => spellDataset.find(m => {
+    return m.spell_name === name;
 }))
 
 export const foutainTypeList = ["Poison", "Potion", "Alcohol", "Diamond", "Water", "Blood"]
@@ -483,6 +489,23 @@ export function getMagicItem(d1, d2) {
   return {type: item_type, effect: magicItemsTable[i][j]}
 }
 
+export function FindHellGateLevel(dice){
+    switch (dice){
+        case 1:
+            return 0;
+        case 2:
+        case 3:
+            return 1;
+        case 4:
+        case 5:
+        case 6:
+            return 2;
+    }
+}
+
+export function FindHellGateDist(dice){
+    return dice + 2;
+}
 
 export function getMonsterHP(item, dice){
   if (Array.isArray(dice) === false){

@@ -3,7 +3,7 @@ import {StyleSheet, View, Text} from "react-native";
 
 export default function Header(){
     return (
-      <View style={styles.main}>
+      <View style={[styles.main, {justifyContent:"center"}]}>
           <Text style={styles.text}>Citadel Of Blood</Text>
       </View>
     );
@@ -11,12 +11,11 @@ export default function Header(){
 
     const styles = StyleSheet.create({
         main: {
-            paddingTop: 40,
             height: 70,
             backgroundColor: 'gray'
         },
         text: {
-            fontSize: 18,
+            fontSize: 25,
             color: 'red',
             textAlign: "center"
         }

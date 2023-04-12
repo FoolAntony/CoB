@@ -17,7 +17,7 @@ import {
     idRandomHero,
     Team,
 } from "../SquadController";
-import {findPrimarySun, getWeapon, magicPotential, rollDice, spellsList} from "../GameController";
+import {findPrimarySun, getSpell, getWeapon, magicPotential, rollDice, spellsList} from "../GameController";
 import {TextInput} from "react-native-gesture-handler";
 
 export let CompleteSquad = {
@@ -157,8 +157,8 @@ const addNewFollower = () => {
              break;
          case "addHeroSpell":
              if (upTeam[state.context.hasSpells].MP[sun] >= spellNumber) {
-                 if (upTeam[state.context.hasSpells].Spells.includes(data) === false) {
-                     upTeam[state.context.hasSpells].Spells.push(data)
+                 if (upTeam[state.context.hasSpells].Spells.some(spell => spell === data) === false) {
+                     upTeam[state.context.hasSpells].Spells.push(JSON.parse(JSON.stringify(getSpell(data))))
                      updateTeam(upTeam)
                      setModalOption("nextState")
                      spellNumber++
