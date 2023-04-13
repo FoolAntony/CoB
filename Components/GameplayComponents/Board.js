@@ -1,12 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
 import React, {useEffect, useState} from "react";
 import {
-  Alert,
-  FlatList, Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert, Button,
+    FlatList, Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import {ReactNativeZoomableView} from "@openspacelabs/react-native-zoomable-view";
 import {useMachine} from "@xstate/react";
@@ -82,6 +82,22 @@ export default function Board({route, navigation}) {
   const [levelHellGate, updateLevelHellGate] = useState(null)
   const [numOfTilesHellGate, updateNumOfTilesHellGate] = useState(null)
 
+  useEffect(() => {
+      navigation.setOptions({
+          headerRight: () => (
+            <Button title={"Information"} onPress={() => {
+                navigation.navigate({
+                  name: "Squad Hub",
+                  params: {
+                      squad: boardMap[mapLevel][currentIndex].squad.squad,
+                      money: boardMap[mapLevel][currentIndex].squad.money,
+                      XP: boardMap[mapLevel][currentIndex].squad.XP
+                  }
+                });
+            }}/>
+          )
+      })
+  }, [navigation, boardMap])
 
   useEffect(() => {
       console.log("HG Level: " + levelHellGate)
@@ -1990,13 +2006,13 @@ const styles = StyleSheet.create({
     borderRadius: 3
   },
     tileContainer: {
-    alignContent: "center",
-    alignItems:"center",
-    width: 90,
-    height: 90,
-    borderWidth:2,
-    borderColor:"silver",
-    borderRadius: 3
+        alignContent: "center",
+        alignItems:"center",
+        width: 90,
+        height: 90,
+        borderWidth:2,
+        borderColor:"silver",
+        borderRadius: 3
   },
   tileImage: {
     width:30,

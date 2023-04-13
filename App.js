@@ -13,6 +13,7 @@ import Board from "./Components/GameplayComponents/Board";
 import Squad from "./Components/GameplayComponents/Squad";
 import Battlefield from "./Components/GameplayComponents/Battlefield";
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
+import SquadHub from "./Components/GameplayComponents/SquadHub"
 import {Team} from "./Components/SquadController";
 
 
@@ -28,22 +29,32 @@ function StackScreens() {
   return (
         <Stack.Navigator>
           {/*<Stack.Screen initialParams={{level: 1, squad: team, money: 0, XP: 0}} name={"Squad"} component={Squad}/>*/}
+          {/*<Stack.Screen*/}
+          {/*    initialParams={{level: 1, squad: team, money: 0, XP: 0}}*/}
+          {/*    name={"Board"}*/}
+          {/*    options={{*/}
+          {/*        headerRight:() => (*/}
+          {/*            <Button*/}
+          {/*                title={"Information"}*/}
+          {/*            />*/}
+          {/*        )*/}
+          {/*    }}*/}
+          {/*    component={Board}/>*/}
+          {/*<Stack.Screen*/}
+          {/*    /*initialParams={{level: 1, squad: team, money: 0, XP: 0, battle:"normal"}}*/}
+          {/*    name={"Battle"}*/}
+          {/*    component={Battlefield}/>*/}
           <Stack.Screen
+              name={"Squad Hub"}
               initialParams={{level: 1, squad: team, money: 0, XP: 0}}
-              name={"Board"}
               options={{
-                  headerRight:() => (
+                  headerLeft:()=>(
                       <Button
-                          onPress={() => Alert.alert("This is button")}
-                          title={"Information"}
+                          title={"Return to Board"}
                       />
                   )
               }}
-              component={Board}/>
-          <Stack.Screen
-              /*initialParams={{level: 1, squad: team, money: 0, XP: 0, battle:"normal"}}*/
-              name={"Battle"}
-              component={Battlefield}/>
+              component={SquadHub}/>
         </Stack.Navigator>
   );
 }

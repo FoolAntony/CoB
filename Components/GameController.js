@@ -222,11 +222,6 @@ export function findPrimarySun(dice) {
 
 export function negotiation(dice, hero, monster){
   let spell_buff = 0
-
-  // if (hero.Spells"Oratory") {
-  //   spell_buff = 4
-  // }
-
   if (hero.Skill[0] === "Negotiation") {
     return dice + spell_buff + hero.Skill[1] - monster.NV
   } else {
