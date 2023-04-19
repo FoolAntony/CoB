@@ -46,8 +46,7 @@ export default function Squad({route, navigation}) {
         console.log("Sun:"+ sun);
         console.log("Chosen: "+chosen);
         console.log("SpellNum: " + spellNumber)
-        updateTeam(route.params?.squad)
-  }, [state, team, sun, chosen, route.params?.squad])
+  }, [state, team, sun, chosen])
 
     let upTeam = Team;
 
@@ -72,7 +71,6 @@ export default function Squad({route, navigation}) {
       upTeam[state.context.amount] = getRandomHero(id)
       updateTeam(upTeam)
       SetMember(team[state.context.amount]);
-      CompleteSquad.squad = team;
     }
     else{
       console.log("Thank you!")
@@ -157,8 +155,8 @@ const addNewFollower = () => {
              break;
          case "addHeroSpell":
              if (upTeam[state.context.hasSpells].MP[sun] >= spellNumber) {
-                 if (upTeam[state.context.hasSpells].Spells.some(spell => spell === data) === false) {
-                     upTeam[state.context.hasSpells].Spells.push(JSON.parse(JSON.stringify(getSpell(data))))
+                 if (upTeam[state.context.hasSpells].Spells.includes((spell) => spell === data) === false) {
+                     upTeam[state.context.hasSpells].Spells.push(data)
                      updateTeam(upTeam)
                      setModalOption("nextState")
                      spellNumber++
@@ -370,13 +368,13 @@ const addNewFollower = () => {
                     <Text style={styles.modalText}>{member.Name ? "Name: " + member.Name : "Add new member here to see his info!"}</Text>
                     <Text style={styles.modalText}>{member.Race ? "Race: " + member.Race : undefined}</Text>
                     <Text style={styles.modalText}>{member.WP ? "Wound Points / WP: " + member.WP : undefined}</Text>
-                    <Text style={styles.modalText}>{member.MP ? "Mana Points / MP (Red/Yellow/Blue): " + member.MP : undefined}</Text>
+                    <Text style={styles.modalText}>{member.MP ? "Mana Points / MP (Red/Yellow/Blue): \n" + member.MP : undefined}</Text>
                     <Text style={styles.modalText}>{member.Spells ? "Spells: " + member.Spells : undefined}</Text>
                     <Text style={styles.modalText}>{member.RV ? "Resistance / RV: " + member.RV : undefined}</Text>
                     <Text style={styles.modalText}>{member.CB ? "Combat Bonus : " + member.CB : undefined}</Text>
                     <Text style={styles.modalText}>{member.Weapon ? "Weapons: " + member.Weapon : undefined}</Text>
-                    <Text style={styles.modalText}>{member.WS ? "Weapon Skills: " + "+" + member.WS[1] + " for " + member.WS[0] : undefined}</Text>
-                    <Text style={styles.modalText}>{member.Skill ? "Hero Skills: " + member.Skill.find((skill)=> {return skill.Name + ": +" + skill.Value}) : undefined}</Text>
+                    <Text style={styles.modalText}>{member.WS ? "Weapon Skills: " + member.WS.map((weaponSkill) => {return "{" + weaponSkill.Type + ": +" + weaponSkill.Damage + (weaponSkill.Magic ? ", Magic} " : "} ")}) : undefined}</Text>
+                    <Text style={styles.modalText}>{member.Skill ? "Hero Skills: " + member.Skill.map((skill) => {return "{" + skill.Name + ": +" + skill.Value + "} "}) : undefined}</Text>
                     <TouchableOpacity
                         style={[styles.button, styles.buttonClose]}
                         onPress={() => setModalVisible(false)}
@@ -487,7 +485,7 @@ const addNewFollower = () => {
       case "empty":
       case "addHeroes":
         return (
-            <TouchableOpacity  onPress={teamAddNewMember}>
+            <TouchableOpacity style={{paddingTop:55}} onPress={teamAddNewMember}>
               <View style={styles.textButtonContainer}>
                 <Text style={styles.textButton}>Add New Hero!</Text>
               </View>
@@ -496,7 +494,7 @@ const addNewFollower = () => {
 
      case "addFollowers":
         return (
-            <TouchableOpacity  onPress={addNewFollower}>
+            <TouchableOpacity style={{paddingTop:55}}  onPress={addNewFollower}>
               <View style={styles.textButtonContainer}>
                 <Text style={styles.textButton}>Add New Follower!</Text>
               </View>
@@ -504,7 +502,7 @@ const addNewFollower = () => {
         );
      case "primarySun":
         return (
-            <TouchableOpacity  onPress={addNewFollower}>
+            <TouchableOpacity style={{paddingTop:55}}  onPress={addNewFollower}>
               <View style={styles.textButtonContainer}>
                 <Text style={styles.textButton}>Find your Primary Sun!</Text>
               </View>
@@ -513,7 +511,7 @@ const addNewFollower = () => {
 
      case "addHeroSpell":
         return (
-            <TouchableOpacity  onPress={addNewFollower}>
+            <TouchableOpacity style={{paddingTop:55}}  onPress={addNewFollower}>
               <View style={styles.textButtonContainer}>
                 <Text style={styles.textButton}>Add Spells!</Text>
               </View>
@@ -522,7 +520,7 @@ const addNewFollower = () => {
 
       case "finish":
         return (
-            <TouchableOpacity  onPress={NavigateToBoard}>
+            <TouchableOpacity style={{paddingTop:55}}  onPress={NavigateToBoard}>
               <View style={styles.textButtonContainer}>
                 <Text style={styles.textButton}>Next Stage!</Text>
               </View>
@@ -564,7 +562,6 @@ const addNewFollower = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent:"space-evenly",
   },
   text: {
     textAlign:"center",
@@ -584,13 +581,13 @@ const styles = StyleSheet.create({
     alignSelf:"center",
   },
   list: {
-    alignSelf: "center",
-    height:405,
+    height:455,
     width:360,
-    borderColor:"red",
+    paddingTop:40,
+    alignSelf: "center",
   },
   flatlist: {
-    alignContent:"center"
+      alignContent: "center"
   },
   separator: {
     height: 15,
@@ -600,7 +597,7 @@ const styles = StyleSheet.create({
     paddingBottom:150
   },
   headerTextContainer: {
-    height:25,
+      paddingTop:10
   },
   centeredView: {
     flex: 1,
@@ -646,7 +643,6 @@ const styles = StyleSheet.create({
   textButton: {
     fontSize: 20,
     textAlign: "center",
-    paddingTop: 5,
     color:"white"
   },
   textButtonContainer: {
@@ -654,9 +650,9 @@ const styles = StyleSheet.create({
     borderRadius:4,
     width:200,
     alignSelf:'center',
+    justifyContent: 'center',
     height:40,
     backgroundColor:'#4040a1',
-    marginBottom: 100
   },
   input: {
     height: 40,
