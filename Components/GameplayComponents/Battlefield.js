@@ -430,7 +430,7 @@ export default function Battlefield({route, navigation}) {
               setModalOption("nextState")
               break;
           case "getMagicItem":
-              if(treasureMagicItemTable[monsters[8].Treasure[0]][0] >= dice || true)
+              if(treasureMagicItemTable[monsters[8].Treasure[0]][0] >= dice)
                   send("EXIST")
               else {
                   if(monsters[8 - turn_index - 1].Name !== undefined) {

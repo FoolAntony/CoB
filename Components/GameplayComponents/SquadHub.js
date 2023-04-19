@@ -14,6 +14,7 @@ import {
     Team,
 } from "../SquadController";
 import {hubMachine} from "../StateMachine/StateMachine.SquadHub";
+import {getSpell, halfDiceRoll, rollDice} from "../GameController";
 
 
 
@@ -25,6 +26,9 @@ export default function SquadHub({route, navigation}) {
     const [modalVisible, setModalVisible] = useState(false);
     const [member, showMember] = useState({});
     const [modalOption, setModalOption] = useState("showHeroInfo");
+    const [chosenSpell, updateChosenSpell] = useState(null)
+    const [chosenItem, updateChosenItem] = useState({})
+    const [dice, updateDice] = useState(null)
 
     useEffect(() => {
       navigation.setOptions({
@@ -69,7 +73,7 @@ export default function SquadHub({route, navigation}) {
                  Alert.alert("User pressed on empty field!")
              }
               break;
-         case "startReorganize":{
+         case "startReorganize":
              if(!Number.isInteger(member)){
                   showMember(index)
               } else {
@@ -77,16 +81,77 @@ export default function SquadHub({route, navigation}) {
                   showMember({})
              }
              break;
-         }
+         case "useSpell":
+             if(memb !== member) {
+                 switch (chosenSpell.spell_name) {
+                     case "Heal":
+                         memb.WP += halfDiceRoll(rollDice()) + 1
+                         member.WP -= chosenSpell.cost
+                         break;
+                     case "Rejuvenate":
+                         memb.WP += rollDice() + 1
+                         member.WP -= chosenSpell.cost
+                         break;
+                     case "Thief":
+                         if(!memb.Effects.includes(chosenSpell.spell_name) && memb.Skill.some((skill) => skill.Name === "Detrap")) {
+                             memb.Effects.push(chosenSpell.spell_name)
+                             member.WP -= chosenSpell.cost
+                         } else
+                             Alert.alert(`Hero already has ${chosenSpell.spell_name} of there is no Detrap skill!`)
+                         break;
+                     default:
+                         if(!memb.Effects.includes(chosenSpell.spell_name)) {
+                             memb.Effects.push(chosenSpell.spell_name)
+                             member.WP -= chosenSpell.cost
+                         } else
+                             Alert.alert(`Hero already has ${chosenSpell.spell_name} effect!`)
+                 }
+                 send("DONE")
+             } else {
+                 Alert.alert("Hero can cast spell only on another hero!")
+             }
+             break;
+         case "useItem":
+             switch(chosenItem.effect){
+                 case "Heal":
+                     memb.WP += rollDice()
+             }
+             let itemIndex = member.Inventory.findIndex((item) => item === chosenItem)
+             member.Inventory.splice(itemIndex, 1);
+             send("DONE")
+             break;
      }
 
 }
 
-
-    const FollowerStates = (data) => {
-     switch (state.value){
+function CheckChosenSpell(spell){
+     switch(spell){
          default:
-             console.log("Some error in Follower State")
+             Alert.alert("You can use only healing or buffing spells here!")
+             break;
+         case "Heal":
+         case "Rejuvenate":
+         case "Thief":
+         case "Oratory":
+             updateChosenSpell(JSON.parse(JSON.stringify(getSpell(spell))))
+             send("USE")
+             setModalVisible(false)
+             break;
+     }
+}
+
+function CheckChosenItem(item){
+     switch(item.type){
+         default:
+             Alert.alert("You can use only potions here!")
+             break;
+         case "Potion":
+             switch(item.effect){
+                 case "Heal":
+                     updateChosenItem(JSON.parse(JSON.stringify(item)))
+                     send("USE")
+                     setModalVisible(false)
+             }
      }
 }
 
@@ -104,6 +169,7 @@ export default function SquadHub({route, navigation}) {
                         return(
                             <View key={index} style={{paddingTop:5}}>
                                 <TouchableOpacity
+                                    onPress={() => CheckChosenItem(item)}
                                     style={[styles.button, styles.buttonClose]}
                                 >
                                     <Text style={styles.textStyle}>{item.type} of {item.effect}</Text>
@@ -121,7 +187,7 @@ export default function SquadHub({route, navigation}) {
                         return(
                             <View key={index} style={{paddingTop:5}}>
                                 <TouchableOpacity
-
+                                    onPress={()=>CheckChosenSpell(item)}
                                     style={[styles.button, styles.buttonClose, {backgroundColor:"limegreen"}]}
                                 >
                                     <Text style={styles.textStyle}>{item}</Text>
@@ -160,8 +226,8 @@ export default function SquadHub({route, navigation}) {
 
   function ScreenButton(){
      switch(state.value) {
-         default:
-         return(
+         case "idle":
+             return(
                  <View style={{paddingTop: 25}}>
                      <TouchableOpacity onPress={() => send("REORGANIZE")}>
                          <View style={styles.textButtonContainer}>
@@ -169,17 +235,53 @@ export default function SquadHub({route, navigation}) {
                          </View>
                      </TouchableOpacity>
                  </View>
-             )
+                 )
          case "startReorganize":
              return(
-                 <View style={{paddingTop: 25}}>
-                     <TouchableOpacity onPress={() => send("FINISH")}>
+                 <View style={{paddingTop: 15}}>
+                     <View style={styles.headerTextContainer}>
+                        <Text style={styles.textHeader}>{!Number.isInteger(member) ? "Choose the person to swap places!" : (squad[member].Name ? "Choose who will swap with " + squad[member].Name : "Choose who will be moved on empty place!")}</Text>
+                     </View>
+                     <TouchableOpacity style={{paddingTop:20}} onPress={() => send("FINISH")}>
                          <View style={styles.textButtonContainer}>
                              <Text style={styles.textButton}>Complete</Text>
                          </View>
                      </TouchableOpacity>
                  </View>
              )
+         case "useSpell":
+             return(
+                 <View style={{paddingTop: 15}}>
+                     <View style={styles.headerTextContainer}>
+                        <Text style={styles.textHeader}>Choose hero to cast the {chosenSpell.spell_name} spell on!</Text>
+                     </View>
+                     <TouchableOpacity style={{paddingTop:20}} onPress={() => {
+                         send("CANCEL")
+                         setModalVisible(true)
+                     }}>
+                         <View style={[styles.textButtonContainer, {backgroundColor: "tomato"}]}>
+                             <Text style={styles.textButton}>Cancel</Text>
+                         </View>
+                     </TouchableOpacity>
+                 </View>
+             )
+         case "useItem":
+             return(
+                 <View style={{paddingTop: 15}}>
+                     <View style={styles.headerTextContainer}>
+                        <Text style={styles.textHeader}>Choose hero to use the {chosenItem.type} of {chosenItem.effect} on!</Text>
+                     </View>
+                     <TouchableOpacity style={{paddingTop:20}} onPress={() => {
+                         send("CANCEL")
+                         setModalVisible(true)
+                     }}>
+                         <View style={[styles.textButtonContainer, {backgroundColor: "tomato"}]}>
+                             <Text style={styles.textButton}>Cancel</Text>
+                         </View>
+                     </TouchableOpacity>
+                 </View>
+             )
+
      }
   }
 
@@ -190,6 +292,34 @@ export default function SquadHub({route, navigation}) {
              <Text style={styles.textHeader}>XP: {xp}</Text>
          </View>
      )
+  }
+  function TitleText() {
+     switch(state.value){
+         default:
+             return(
+                 <View style={styles.headerTextContainer}>
+                    <Text style={styles.textHeader}>Welcome to Squad Hub!</Text>
+                 </View>
+             )
+         case "startReorganize":
+             return(
+                 <View style={styles.headerTextContainer}>
+                    <Text style={styles.textHeader}>Reorganize your Squad!</Text>
+                 </View>
+             )
+         case "useSpell":
+             return(
+                 <View style={styles.headerTextContainer}>
+                    <Text style={styles.textHeader}>Cast Spell!</Text>
+                 </View>
+             )
+         case "useItem":
+             return(
+                 <View style={styles.headerTextContainer}>
+                    <Text style={styles.textHeader}>Use Item!</Text>
+                 </View>
+             )
+     }
   }
 
 
@@ -274,6 +404,7 @@ export default function SquadHub({route, navigation}) {
                     <Text style={styles.modalText}>{member.RV ? "Resistance / RV: " + member.RV : null}</Text>
                     <Text style={styles.modalText}>{member.CB ? "Combat Bonus : " + member.CB : null}</Text>
                     <Text style={styles.modalText}>{member.Weapon ? "Weapons: " + member.Weapon : null}</Text>
+                    <Text style={styles.modalText}>{member.Effects ? "Effects: " + member.Effects : null}</Text>
                     <Text style={styles.modalText}>{member.WS ? "Weapon Skills: " + member.WS.map((weaponSkill) => {return "{" + weaponSkill.Type + ": +" + weaponSkill.Damage + (weaponSkill.Magic ? ", Magic} " : "} ")}) : undefined}</Text>
                     <Text style={styles.modalText}>{member.Skill ? "Hero Skills: " + member.Skill.map((skill) => {return "{" + skill.Name + ": +" + skill.Value + "} "}) : undefined}</Text>
                     <TouchableOpacity
@@ -331,9 +462,7 @@ export default function SquadHub({route, navigation}) {
     <View style={styles.container}>
         <ModalScreen/>
         <DisplayStats/>
-      <View style={styles.headerTextContainer}>
-        <Text style={styles.textHeader}>Make your Squad of Heroes!</Text>
-      </View>
+        <TitleText/>
       <View style={styles.list}>
         <FlatList
             style={styles.flatlist}

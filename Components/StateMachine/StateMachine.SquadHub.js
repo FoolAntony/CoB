@@ -22,7 +22,8 @@ export const hubMachine = createMachine(
       },
       useSpell:{
         on:{
-
+          CANCEL:"checkSpells",
+          DONE:"idle"
         }
       },
       checkInventory:{
@@ -33,7 +34,8 @@ export const hubMachine = createMachine(
       },
       useItem:{
         on:{
-
+          CANCEL: "checkInventory",
+          DONE:"idle"
         }
       },
       startReorganize:{

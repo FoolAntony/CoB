@@ -183,24 +183,20 @@ export default function Board({route, navigation}) {
       switch (state.value) {
           case "chooseMember":
               if(boardMap[mapLevel][currentIndex].squad.squad[index].Name !== undefined) {
-                  let detrapSkill = boardMap[mapLevel][currentIndex].squad.squad[index].Skill.find((skill) => skill.Name === "Detrap")
-                  if (detrapSkill !== undefined)
-                      send("NEXT")
-                  else {
-                      send("NEXT")
-                      send("FAIL")
-                  }
                   updateMemberIndex(index)
                   setModalOption("nextState")
                   setModalVisible(true)
+                  send("NEXT")
               } else
                   Alert.alert("Please choose the hero, not an empty space!")
               break;
           case "chooseRoomMember":
               if(boardMap[mapLevel][currentIndex].squad.squad[index].Name !== undefined) {
+                  send("NEXT")
+                  if(!boardMap[mapLevel][currentIndex].squad.squad[index].Skill.some((skill) => skill.Name === "Detrap"))
+                      send("FAIL")
                   updateMemberIndex(index)
                   setModalOption("nextState")
-                  send("NEXT")
               } else
                   Alert.alert("Please choose the hero, not an empty space!")
               break;
@@ -250,16 +246,16 @@ export default function Board({route, navigation}) {
         case "chooseNewTile":
             if (tile.type === undefined) {
                 Alert.alert("Please, press on empty random tile field before choosing the place on the map!")
-                break;
-            }
-            if (CheckTilesConnected(index, tile) === true) {
+            } else if (CheckTilesConnected(index, tile) === true && isNotWallConnection(index) === true) {
                 mod_board[mapLevel][index] = JSON.parse(JSON.stringify(tile));
                 changeBoardMap(mod_board);
                 send("NEXT")
-                if (isCorridorConnection(index) === true)
+                if (isCorridorConnection(index, tile) === true)
                     send("NONE")
+                else
+                    setModalVisible(true)
                 setNewIndex(index)
-                setModalVisible(true)
+
             } else {
                 Alert.alert("Player have chosen wrong board place for this tile. Please, check if sides of the connected tiles are the same and there is squad in one of them!")
             }
@@ -292,22 +288,46 @@ export default function Board({route, navigation}) {
         setModalVisible(true)
   }
 
-  function isCorridorConnection(index) {
+  function isCorridorConnection(index, tile) {
     let res = false
     if(currentIndex === (index - 11)){
-      if (boardMap[mapLevel][index].bottom === boardMap[mapLevel][currentIndex].top && boardMap[mapLevel][currentIndex].top === "corr")
+      if (tile.top === "corr")
         res = true
     } else if(currentIndex === (index - 1)) {
-      if (boardMap[mapLevel][index].left === boardMap[mapLevel][currentIndex].right && boardMap[mapLevel][currentIndex].right === "corr")
+      if (tile.left === "corr")
         res = true
     } else if(currentIndex === (index + 1)) {
-      if (boardMap[mapLevel][index].right === boardMap[mapLevel][currentIndex].left && boardMap[mapLevel][currentIndex].left === "corr")
+      if (tile.right === "corr")
         res = true
     }else if(currentIndex === (index + 11)) {
-      if (boardMap[mapLevel][index].top === boardMap[mapLevel][currentIndex].bottom && boardMap[mapLevel][currentIndex].bottom === "corr")
+      if (tile.bottom === "corr")
         res = true
     }
       return res
+  }
+
+function isNotWallConnection(index) {
+    let result = true
+    if(currentIndex === (index - 11)){
+      if (tile.top === "wall")
+        result = false
+        else console.log("top fine")
+    } else if(currentIndex === (index - 1)) {
+      if (tile.left === "wall")
+        result = false
+        else console.log("left fine")
+    } else if(currentIndex === (index + 1)) {
+      if (tile.right === "wall")
+        result = false
+        else console.log("right fine")
+    }else if(currentIndex === (index + 11)) {
+      if (tile.bottom === "wall")
+        result = false
+        else console.log("bottom fine")
+    }
+    console.log("Current: " + currentIndex)
+    console.log("Chosen: " + index)
+    return result
   }
 
   function CheckTilesConnected(index, tile) {
@@ -425,7 +445,7 @@ export default function Board({route, navigation}) {
   function AfterDiceActions(dice) {
     switch(state.value){
       case "checkTraps":
-        if (dice === 1) {
+        if (dice === 1 || true) {
           send("EXIST")
           setModalOption("nextState")
           setModalVisible(true)
@@ -436,8 +456,13 @@ export default function Board({route, navigation}) {
         }
         break;
       case "doDetrap":
-        let detrapSkill = boardMap[mapLevel][currentIndex].squad.squad[memberIndex].Skill.find((skill) => skill.Name === "Detrap")
-        if (detrapSkill !== undefined && dice <= detrapSkill.Value) {
+          let skillValue = 0;
+          let hero = boardMap[mapLevel][currentIndex].squad.squad[memberIndex]
+          if(hero.Skill.find((skill) => skill.Name === "Detrap") !== undefined)
+              skillValue += hero.Skill.find((skill) => skill.Name === "Detrap").Value
+          if(hero.Effects.includes("Thief"))
+              skillValue += 3
+        if (dice <= skillValue) {
             if(state.context.isRoom === true)
                 send("SUCCESSROOM")
             else {
@@ -447,6 +472,10 @@ export default function Board({route, navigation}) {
         } else {
             send("FAIL")
             setModalVisible(true)
+        }
+        if(hero.Effects.includes("Thief")) {
+            let skillID = boardMap[mapLevel][currentIndex].squad.squad[memberIndex].Effects.indexOf("Thief")
+            boardMap[mapLevel][currentIndex].squad.squad[memberIndex].Effects.splice(skillID, 1)
         }
         setModalOption("nextState")
         break;
@@ -502,7 +531,7 @@ export default function Board({route, navigation}) {
         setModalOption("nextState")
         setModalVisible(false);
         if(numOfTilesHellGate === null || numOfTilesHellGate > 0){
-            if(state.context.goNewTile === true && isCorridorConnection(prevIndex) === false) {
+            if(state.context.goNewTile === true && isCorridorConnection(prevIndex, boardMap[mapLevel][prevIndex]) === false) {
                 if (dice < 4) {
                     send("EXIST")
                     navigation.navigate({
@@ -783,6 +812,7 @@ export default function Board({route, navigation}) {
                         battle: "normal"
                     }
                 })
+                setModalVisible(false)
             } else
                 send("TREASURE")
                 break;
@@ -999,19 +1029,23 @@ export default function Board({route, navigation}) {
       if(levelHellGate === null){
           let level = FindHellGateLevel(dice)
           updateLevelHellGate(level)
-          setModalOption("nextState")
           if(mapLevel !== level){
               send("NEXT")
               send("NEXT")
               setModalVisible(false)
           }
-      } else if (numOfTilesHellGate === null) {
+      } else if (numOfTilesHellGate === null && levelHellGate === mapLevel) {
           updateNumOfTilesHellGate(FindHellGateDist(dice))
-          setModalOption("nextState")
+          send("NEXT")
+          send("NEXT")
+          setModalVisible(false)
+      } else {
+          Alert.alert("Find mirror on " + levelHellGate + " level to find distance from Hell Gates! ")
           send("NEXT")
           send("NEXT")
           setModalVisible(false)
       }
+      setModalOption("nextState")
   }
 
   function UseStairsDown(){
