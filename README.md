@@ -31,7 +31,7 @@ npm install package.json
 npm start
 ```
 
-##Devices
+## Devices
 
 The project can work both on real devices and emulators. As real devices the iPhone 11 and the Samsung 20FE were used. To use them, first download the Expo Go application on your device:
 
