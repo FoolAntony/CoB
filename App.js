@@ -45,12 +45,12 @@ let team_test = [{"CB": 5, "MP": [0, 0, 0], "Name": "Weldron", "RV": 2, "Race": 
 function StackScreens() {
   return (
         <Stack.Navigator>
+          {/*<Stack.Screen*/}
+          {/*    initialParams={{squad: team, money: 0, XP: 0}}*/}
+          {/*    name={"Squad"}*/}
+          {/*    component={Squad}/>*/}
           <Stack.Screen
-              initialParams={{level: 1, squad: team, money: 0, XP: 0}}
-              name={"Squad"}
-              component={Squad}/>
-          <Stack.Screen
-             /* initialParams={{level: 1, squad: team, money: 0, XP: 0}}*/
+              initialParams={{squad: team_test, money: 0, XP: 0}}
               name={"Board"}
               options={{
                   headerRight:() => (
@@ -61,12 +61,12 @@ function StackScreens() {
               }}
               component={Board}/>
           <Stack.Screen
-              /* initialParams={{level: 1, squad: team, money: 0, XP: 0, battle:"normal"}}*/
+              /* initialParams={{squad: team_test, money: 0, XP: 0, battle:"normal"}}*/
               name={"Battle"}
               component={Battlefield}/>
           <Stack.Screen
               name={"Squad Hub"}
-                /* initialParams={{level: 1, squad: team, money: 0, XP: 0}}*/
+                /* initialParams={{squad: team_test, money: 0, XP: 0}}*/
               options={{
                   headerLeft:()=>(
                       <Button

@@ -25,6 +25,7 @@ export default function SquadHub({route, navigation}) {
     const [xp, updateXP] = useState(route.params.XP);
     const [modalVisible, setModalVisible] = useState(false);
     const [member, showMember] = useState({});
+    const [chosenMember, setChosenMember] = useState({})
     const [modalOption, setModalOption] = useState("showHeroInfo");
     const [chosenSpell, updateChosenSpell] = useState(null)
     const [chosenItem, updateChosenItem] = useState({})
@@ -58,8 +59,6 @@ export default function SquadHub({route, navigation}) {
     useEffect(() => {
         updateSquad(route.params.squad)
     }, [route.params?.squad])
-
-    let upTeam = Team;
 
 
  const SetMember = (memb, index) => {
@@ -116,10 +115,21 @@ export default function SquadHub({route, navigation}) {
                  case "Heal":
                      memb.WP += rollDice()
              }
-             let itemIndex = member.Inventory.findIndex((item) => item === chosenItem)
-             member.Inventory.splice(itemIndex, 1);
+             let itemIndex = member.Inventory.findIndex(item => item === chosenItem)
+             member.Inventory = member.Inventory.splice(itemIndex, 1);
              send("DONE")
              break;
+         case "tradeItem":
+             setModalVisible(true)
+             break;
+         case "giveItem":
+             let inx = member.Inventory.findIndex(item => item === chosenItem)
+             memb.Inventory.push(chosenItem)
+             member.Inventory = member.Inventory.splice(inx, 1)
+             setChosenMember(memb)
+             setModalVisible(true)
+             break;
+
      }
 
 }
@@ -140,20 +150,6 @@ function CheckChosenSpell(spell){
      }
 }
 
-function CheckChosenItem(item){
-     switch(item.type){
-         default:
-             Alert.alert("You can use only potions here!")
-             break;
-         case "Potion":
-             switch(item.effect){
-                 case "Heal":
-                     updateChosenItem(JSON.parse(JSON.stringify(item)))
-                     send("USE")
-                     setModalVisible(false)
-             }
-     }
-}
 
   const itemSeparator = () => {
     return(<View style={styles.separator}/>)
@@ -169,7 +165,10 @@ function CheckChosenItem(item){
                         return(
                             <View key={index} style={{paddingTop:5}}>
                                 <TouchableOpacity
-                                    onPress={() => CheckChosenItem(item)}
+                                    onPress={() => {
+                                        updateChosenItem(JSON.parse(JSON.stringify(item)))
+                                        send("CHOOSE")
+                                    }}
                                     style={[styles.button, styles.buttonClose]}
                                 >
                                     <Text style={styles.textStyle}>{item.type} of {item.effect}</Text>
@@ -197,6 +196,83 @@ function CheckChosenItem(item){
                      }) : null}
                  </View>
              )
+         case "chooseAction":
+             return(
+                 <View>
+                    <Text style={styles.modalText}>What do you want to do with {chosenItem.type} of {chosenItem.effect}?</Text>
+                     {chosenItem.type === "Potion" ? (
+                             <TouchableOpacity
+                                 onPress={() => {
+                                     send("USE")
+                                     setModalVisible(false)
+                                 }}
+                                 style={[styles.button, styles.buttonClose]}
+                             >
+                                 <Text style={styles.textStyle}>Use</Text>
+                             </TouchableOpacity>
+                         ) : null}
+                     <TouchableOpacity
+                        onPress={() => {
+                            send("TRADE")
+                            setModalVisible(false)
+                        }}
+                        style={[styles.button, styles.buttonClose]}
+                    >
+                        <Text style={styles.textStyle}>Trade</Text>
+                    </TouchableOpacity>
+                     <TouchableOpacity
+                        onPress={() => {
+                            send("GIVEAWAY")
+                            setModalVisible(false)
+                        }}
+                        style={[styles.button, styles.buttonClose]}
+                    >
+                        <Text style={styles.textStyle}>Give Away</Text>
+                    </TouchableOpacity>
+                 </View>
+             )
+         case "tradeItem":
+             return(
+                 <View>
+                     <Text style={styles.modalText}>Do you want {member.Name} to trade the {chosenItem.type} of {chosenItem.effect}?</Text>
+                    <View style={{flexDirection:"row", justifyContent:"space-evenly"}}>
+                         <TouchableOpacity
+                            style={[styles.button, styles.buttonClose, {backgroundColor:"tomato"}]}
+                            onPress={() => {
+                                setModalVisible(false)
+                            }}
+                        >
+                          <Text style={styles.textStyle}>Cancel</Text>
+                        </TouchableOpacity>
+                         <TouchableOpacity
+                            onPress={() => {
+                                send("DONE")
+                                setModalVisible(false)
+                            }}
+                            style={[styles.button, styles.buttonClose]}
+                        >
+                            <Text style={styles.textStyle}>Trade</Text>
+                        </TouchableOpacity>
+                    </View>
+                 </View>
+             )
+         case "giveItem":
+             return(
+                 <View>
+                    <Text style={styles.modalText}>{member.Name} gives the {chosenItem.type} of {chosenItem.effect} to {chosenMember.Name}</Text>
+                     <View style={{flexDirection:"row", justifyContent:"space-evenly"}}>
+                         <TouchableOpacity
+                            onPress={() => {
+                                send("DONE")
+                                setModalVisible(false)
+                            }}
+                            style={[styles.button, styles.buttonClose]}
+                        >
+                            <Text style={styles.textStyle}>Continue</Text>
+                        </TouchableOpacity>
+                    </View>
+                 </View>
+             )
      }
   }
 
@@ -217,6 +293,20 @@ function CheckChosenItem(item){
                         </TouchableOpacity>
                     </View>
                 )
+            case "chooseAction":
+                return(
+                    <View style={{paddingTop:10}}>
+                        <TouchableOpacity
+                            style={[styles.button, styles.buttonClose, {backgroundColor:"tomato"}]}
+                            onPress={() => {
+                                send("CANCEL")
+                            }}
+                        >
+                          <Text style={styles.textStyle}>Go Back</Text>
+                        </TouchableOpacity>
+                    </View>
+                )
+
         }
   }
 
@@ -281,6 +371,38 @@ function CheckChosenItem(item){
                      </TouchableOpacity>
                  </View>
              )
+         case "tradeItem":
+             return(
+                 <View style={{paddingTop: 15}}>
+                     <View style={styles.headerTextContainer}>
+                        <Text style={styles.textHeader}>Choose hero to trade the {chosenItem.type} of {chosenItem.effect} with!</Text>
+                     </View>
+                     <TouchableOpacity style={{paddingTop:20}} onPress={() => {
+                         send("CANCEL")
+                         setModalVisible(true)
+                     }}>
+                         <View style={[styles.textButtonContainer, {backgroundColor: "tomato"}]}>
+                             <Text style={styles.textButton}>Cancel</Text>
+                         </View>
+                     </TouchableOpacity>
+                 </View>
+             )
+         case "giveItem":
+             return(
+                 <View style={{paddingTop: 15}}>
+                     <View style={styles.headerTextContainer}>
+                        <Text style={styles.textHeader}>Choose hero to give the {chosenItem.type} of {chosenItem.effect} away!</Text>
+                     </View>
+                     <TouchableOpacity style={{paddingTop:20}} onPress={() => {
+                         send("CANCEL")
+                         setModalVisible(true)
+                     }}>
+                         <View style={[styles.textButtonContainer, {backgroundColor: "tomato"}]}>
+                             <Text style={styles.textButton}>Cancel</Text>
+                         </View>
+                     </TouchableOpacity>
+                 </View>
+             )
 
      }
   }
@@ -293,6 +415,8 @@ function CheckChosenItem(item){
          </View>
      )
   }
+
+
   function TitleText() {
      switch(state.value){
          default:

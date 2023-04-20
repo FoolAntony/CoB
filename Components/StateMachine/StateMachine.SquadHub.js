@@ -28,13 +28,33 @@ export const hubMachine = createMachine(
       },
       checkInventory:{
         on: {
-          USE: "useItem",
+          CHOOSE: "chooseAction",
           CANCEL: "idle"
+        }
+      },
+      chooseAction:{
+        on:{
+          USE: "useItem",
+          TRADE: "tradeItem",
+          GIVEAWAY: "giveItem",
+          CANCEL: "checkInventory"
         }
       },
       useItem:{
         on:{
-          CANCEL: "checkInventory",
+          CANCEL: "chooseAction",
+          DONE:"idle"
+        }
+      },
+      tradeItem:{
+        on:{
+          CANCEL: "chooseAction",
+          DONE:"idle"
+        }
+      },
+      giveItem:{
+        on:{
+          CANCEL: "chooseAction",
           DONE:"idle"
         }
       },
@@ -42,9 +62,6 @@ export const hubMachine = createMachine(
         on: {
           FINISH:"idle"
         }
-      },
-      finish: {
-        type: "final"
       }
     },
     predictableActionArguments:true
