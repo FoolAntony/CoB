@@ -49,6 +49,7 @@ export const boardMachine = createMachine(
       },
       chooseNewTile: {
         on: {
+          BACK: "idle",
           NEXT: "checkTraps"
         },
       },
@@ -87,6 +88,7 @@ export const boardMachine = createMachine(
       },
       choosePrevTile: {
         on: {
+          BACK: "idle",
           NEXT: "moveSquad"
         }
       },

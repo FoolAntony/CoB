@@ -280,7 +280,7 @@ export default function Board({route, navigation}) {
         boardMap[mapLevel][currentIndex].squad = {};
         setPrevIndex(currentIndex)
         currentIndex = index;
-        if(numOfTilesHellGate > 0) {
+        if(state.context.goNewTile === true && numOfTilesHellGate > 0) {
             updateNumOfTilesHellGate((num) => num - 1)
         }
         send("NEXT");
@@ -337,7 +337,7 @@ function isNotWallConnection(index) {
     let left_check = false
     if((index-1) === currentIndex || (index-11) === currentIndex || (index+1) === currentIndex || (index+11) === currentIndex) {
       if ((Math.floor((index - 1) / 11) === Math.floor(index / 11)) && boardMap[mapLevel][index - 1].type !== undefined) {
-        if (boardMap[mapLevel][index - 1].type === "entry" || boardMap[mapLevel][index - 1].right === tile.left)
+        if (tile.type === "entry" || boardMap[mapLevel][index - 1].type === "entry" || boardMap[mapLevel][index - 1].right === tile.left)
           left_check = true
         else
           console.log("Left error!")
@@ -345,7 +345,7 @@ function isNotWallConnection(index) {
         left_check = true
       }
       if (boardMap[mapLevel][index - 11].type !== undefined) {
-        if (boardMap[mapLevel][index - 11].type === "entry" || boardMap[mapLevel][index - 11].bottom === tile.top)
+        if (tile.type === "entry" || boardMap[mapLevel][index - 11].type === "entry" || boardMap[mapLevel][index - 11].bottom === tile.top)
           top_check = true
         else
           console.log("Top error!")
@@ -353,7 +353,7 @@ function isNotWallConnection(index) {
         top_check = true
       }
       if ((Math.floor((index + 1) / 11) === Math.floor(index / 11)) && boardMap[mapLevel][index + 1].type !== undefined) {
-        if (boardMap[mapLevel][index + 1].type === "entry" || boardMap[mapLevel][index + 1].left === tile.right)
+        if (tile.type === "entry" || boardMap[mapLevel][index + 1].type === "entry" || boardMap[mapLevel][index + 1].left === tile.right)
           right_check = true
         else
           console.log("Right error!")
@@ -361,7 +361,7 @@ function isNotWallConnection(index) {
         right_check = true
       }
       if (boardMap[mapLevel][index + 11].type !== undefined) {
-        if (boardMap[mapLevel][index + 11].type === "entry" || boardMap[mapLevel][index + 11].top === tile.bottom)
+        if (tile.type === "entry" || boardMap[mapLevel][index + 11].type === "entry" || boardMap[mapLevel][index + 11].top === tile.bottom)
           bottom_check = true
         else
           console.log("Bottom error!")
@@ -740,6 +740,7 @@ function isNotWallConnection(index) {
                       battle: "medusa"
                   }
                 });
+                setModalVisible(false)
                 break;
             case "Diamond":
                 mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Treasure.push(jewelryTable(rollDice() + rollDice() + 2))
@@ -748,6 +749,8 @@ function isNotWallConnection(index) {
                 navigation.setParams({
                     squad: mod_board[mapLevel][currentIndex].squad.squad
                 })
+                setModalVisible(false)
+                send("NEXT")
                 break;
             case "Medallion":
                 mod_board[mapLevel][currentIndex].squad.squad[memberIndex].Inventory.push(getMagicItem(5, dice))
@@ -755,6 +758,8 @@ function isNotWallConnection(index) {
                 navigation.setParams({
                     squad: mod_board[mapLevel][currentIndex].squad.squad
                 })
+                setModalVisible(false)
+                send("NEXT")
                 break;
             case "Demon":
                 let demonType = CheckRoomInside("altar", dice)
@@ -766,6 +771,8 @@ function isNotWallConnection(index) {
                 navigation.setParams({
                     squad: mod_board[mapLevel][currentIndex].squad.squad
                 })
+                send("NEXT")
+                setModalVisible(false)
                 break;
             case "Unknown":
                 if(dice > resistance) {
@@ -786,10 +793,11 @@ function isNotWallConnection(index) {
                     });
                 } else
                     send("NEXT")
+                setModalVisible(false)
                 break;
         }
         setModalOption("nextState")
-        setModalVisible(false)
+
     }
 
     function GetTrapdoorEvent(dice){
@@ -975,6 +983,7 @@ function isNotWallConnection(index) {
               squad: mod_board[mapLevel][currentIndex].squad.squad
           })
     }
+
     function GetFurnitureEvent(dice){
         let mod_board = JSON.parse(JSON.stringify(boardMap));
         switch (roomType){
@@ -1017,6 +1026,8 @@ function isNotWallConnection(index) {
                 setModalVisible(false)
                 break;
             case "Harpsichord":
+                send("NEXT")
+                setModalVisible(false)
                 break;
             case "Mirror":
                 GetMirrorEvent(dice)
@@ -1475,7 +1486,7 @@ function RoomTemplates() {
               case "Harpsichord":
                   return(
                       <View>
-                        <Text style={styles.modalText}>Hero finds a bed and decides to take a nap.</Text>
+                        <Text style={styles.modalText}>Hero finds a harpsichord in this room.</Text>
                         <Text style={styles.modalText}>His wounds heal for 2!</Text>
                       </View>
                   )
@@ -1873,28 +1884,40 @@ function ModalButton() {
         )
       case "chooseNewTile":
         return(
-            <View style={{flexDirection:"row", justifyContent:"center"}}>
-              <TouchableOpacity onPress={RotateLeft}>
-                <View style={[styles.textTileButtonContainer]}>
-                  <Text style={styles.textButton}>{"<<<"}</Text>
+            <View>
+                <View style={{flexDirection:"row", justifyContent:"center"}}>
+                  <TouchableOpacity onPress={RotateLeft}>
+                    <View style={[styles.textTileButtonContainer]}>
+                      <Text style={styles.textButton}>{"<<<"}</Text>
+                    </View>
+                  </TouchableOpacity>
+                  <View style={{width:50}}></View>
+                  <TouchableOpacity onPress={RandomTile}>
+                      <RandomTileCheck/>
+                  </TouchableOpacity>
+                  <View style={{width:50}}></View>
+                  <TouchableOpacity onPress={RotateRight}>
+                    <View style={[styles.textTileButtonContainer]}>
+                      <Text style={styles.textButton}>{">>>"}</Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
-              <View style={{width:50}}></View>
-              <TouchableOpacity onPress={RandomTile}>
-                  <RandomTileCheck/>
-              </TouchableOpacity>
-              <View style={{width:50}}></View>
-              <TouchableOpacity onPress={RotateRight}>
-                <View style={[styles.textTileButtonContainer]}>
-                  <Text style={styles.textButton}>{">>>"}</Text>
-                </View>
-              </TouchableOpacity>
+                <TouchableOpacity style={{paddingTop:10, paddingBottom:10}} onPress={() => send("BACK")}>
+                  <View style={[styles.textButtonContainer, {height: 45, alignSelf: "center", backgroundColor: "tomato"}]}>
+                    <Text style={styles.textButton}>Cancel</Text>
+                  </View>
+                </TouchableOpacity>
             </View>
         )
       case "choosePrevTile":
              return(
-                <View style={{}}>
+                <View>
                   <Text style={[styles.textButton, {color: "black"}]}>Choose the tile you want to go!</Text>
+                    <TouchableOpacity style={{paddingTop:10, paddingBottom:10}} onPress={() => send("BACK")}>
+                      <View style={[styles.textButtonContainer, {height: 45, alignSelf: "center", backgroundColor: "tomato"}]}>
+                        <Text style={styles.textButton}>Cancel</Text>
+                      </View>
+                    </TouchableOpacity>
                 </View>
         )
       case "chooseAfterBattleAction":
@@ -2121,11 +2144,11 @@ const styles = StyleSheet.create({
   textButtonContainer: {
     borderColor:'grey',
     borderRadius:4,
+    height: 70,
     width:190,
     alignSelf:'center',
     justifyContent:"center",
     backgroundColor:'#4040a1',
-    paddingBottom:50
   },
     textTileButtonContainer: {
     borderColor:'grey',
