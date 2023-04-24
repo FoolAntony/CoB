@@ -445,7 +445,7 @@ function isNotWallConnection(index) {
   function AfterDiceActions(dice) {
     switch(state.value){
       case "checkTraps":
-        if (dice === 1 || true) {
+        if (dice === 1) {
           send("EXIST")
           setModalOption("nextState")
           setModalVisible(true)

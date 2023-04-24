@@ -72,7 +72,7 @@ export default function Battlefield({route, navigation}) {
               break;
           case "doNegotiation":
           case "doBribery":
-              if(member.Name !== undefined) {
+              if(mem.Name !== undefined) {
                   setModalOption("nextState")
                   showMember(mem);
                   setModalVisible(true)
@@ -527,7 +527,7 @@ export default function Battlefield({route, navigation}) {
           return (
               <View>
                 <Text style={styles.modalText}>{member.Name} will try to negotiate!</Text>
-                <Text style={styles.modalText}>His negotiation value is: {negotiationSkill.Name === "Negotiation" ? negotiationSkill.Value : 0}</Text>
+                <Text style={styles.modalText}>His negotiation value is: {negotiationSkill !== undefined ? negotiationSkill.Value : 0}</Text>
                 <Text style={styles.modalText}>Do you want to try?</Text>
               </View>
 
