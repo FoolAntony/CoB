@@ -280,12 +280,25 @@ export default function Board({route, navigation}) {
         boardMap[mapLevel][currentIndex].squad = {};
         setPrevIndex(currentIndex)
         currentIndex = index;
-        if(state.context.goNewTile === true && numOfTilesHellGate > 0) {
-            updateNumOfTilesHellGate((num) => num - 1)
-        }
         send("NEXT");
         setModalOption("nextState")
-        setModalVisible(true)
+        if(mapLevel === levelHellGate && state.context.goNewTile === true && numOfTilesHellGate > 0) {
+            updateNumOfTilesHellGate((num) => num - 1)
+        }
+        if(numOfTilesHellGate === 1){
+            send("EXIST")
+            navigation.navigate({
+                        name: "Battle",
+                        params: {
+                            squad: boardMap[mapLevel][currentIndex].squad.squad,
+                            money: boardMap[mapLevel][currentIndex].squad.money,
+                            XP: boardMap[mapLevel][currentIndex].squad.XP,
+                            battle: "boss"
+                        }
+                    })
+        } else {
+            setModalVisible(true)
+        }
   }
 
   function isCorridorConnection(index, tile) {

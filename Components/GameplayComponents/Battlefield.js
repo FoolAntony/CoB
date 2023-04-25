@@ -5,13 +5,14 @@ import {
     battleResult,
     briberyMoneySet,
     briberyResult, getMagicItem,
-    getMonsterHP, getSpell, halfDiceRoll, jewelryTable, magicItemsTable,
+    getMonsterHP, getSpell, halfDiceRoll, jewelryTable, magicItemsTable, monst,
     monsterType, monsterWanderingType,
     negotiation,
     rollDice, SquadIsOver, treasureGoldTable, treasureJewelryTable, treasureMagicItemTable, weaponBonus
 } from "../GameController";
 import {useMachine} from "@xstate/react";
 import {battleMachine} from "../StateMachine/StateMachine.Battle";
+import {idRandomHero} from "../SquadController";
 
 const MonsterSet = [ {} , {} , {} ,
                      {} , {} , {} ,
@@ -81,7 +82,13 @@ export default function Battlefield({route, navigation}) {
               }
               break;
           case "heroesTurn":
-              if(mem.Name !== undefined && usedMembers.includes(mem) === false) {
+              if(SquadIsOver(monsters) === true){
+                  if(mem.Skill.find((skill) => skill.Name === "Hellgate") !== undefined)
+                      showMember(mem)
+                  else {
+                      Alert.alert("Choose hero with Hellgate skill!")
+                  }
+              } else if(mem.Name !== undefined && usedMembers.includes(mem) === false) {
                   showMember(mem);
               } else {
                   Alert.alert("Player pressed on empty space or hero must be already chosen!")
@@ -126,9 +133,13 @@ export default function Battlefield({route, navigation}) {
               break;
           case "heroesTurn":
               if (member.Name !== undefined && monst.Name !== undefined) {
-                  setModalOption("nextState")
-                  showMonster(monst)
-                  setModalVisible(true)
+                  if(monst.Name === "Hell Gates" && SquadIsOver(monsters) === false)
+                      Alert.alert("You must defeat all monsters to reach Hell Gates!")
+                   else {
+                      setModalOption("nextState")
+                      showMonster(monst)
+                      setModalVisible(true)
+                  }
               } else {
                   Alert.alert("Hero is not chosen yet or there is no monster!")
               }
@@ -161,7 +172,7 @@ export default function Battlefield({route, navigation}) {
       case "idle":
         setModalOption("nextState");
         setModalVisible(true);
-        if(battleParams === "normal" || battleParams === "wondering")
+        if(battleParams === "normal" || battleParams === "wondering" || battleParams === "boss")
             send("START");
         else if (battleParams === "medusa" || battleParams === 'hatch' || battleParams === "vampire" || battleParams === "unknown"){
             send("START")
@@ -225,8 +236,15 @@ export default function Battlefield({route, navigation}) {
               setModalOption("nextState")
               send("NEXT")
               let choice = monsterType(dice[0], dice[1], dice[2])
-              if (battleParams === "wondering")
-                choice = monsterWanderingType(dice[0], dice[1], dice[2])
+              switch(battleParams){
+                  default:
+                      break;
+                  case "wondering":
+                      choice = monsterWanderingType(dice[0], dice[1], dice[2])
+                      break;
+                  case "boss":
+                      choice = {monster: monst("Demon"), amount: halfDiceRoll(dice[2]) * 2 + 1}
+              }
               setMonsterAmount(choice.amount)
               placeMonsters(choice)
               break;
@@ -279,57 +297,76 @@ export default function Battlefield({route, navigation}) {
               }
               break;
           case "heroesTurn":
-              let damage = 0
-              if(chosenWeapon !== null) {
-                  damage = battleResult(member, dice, chosenWeapon)
-                  console.log("Damage: " + damage )
-              } else if (chosenSpell !== null){
-                  if (dice > monster.RV){
-                      let spell = JSON.parse(JSON.stringify(getSpell(chosenSpell)))
-                      console.log(spell)
-                      member.WP -= spell.cost
-                      switch(chosenSpell){
-                          case "Blast":
-                              damage = 2;
-                              break;
-                          case "Thunderbolt":
-                              damage = halfDiceRoll(rollDice()) * 2;
-                              break;
-                          default:
-                              break;
+              if(SquadIsOver(monsters) === false) {
+                  let damage = 0
+                  if (chosenWeapon !== null) {
+                      damage = battleResult(member, dice, chosenWeapon)
+                      console.log("Damage: " + damage)
+                  } else if (chosenSpell !== null) {
+                      if (dice > monster.RV) {
+                          let spell = JSON.parse(JSON.stringify(getSpell(chosenSpell)))
+                          console.log(spell)
+                          member.WP -= spell.cost
+                          switch (chosenSpell) {
+                              case "Blast":
+                                  damage = 2;
+                                  break;
+                              case "Thunderbolt":
+                                  damage = halfDiceRoll(rollDice()) * 2;
+                                  break;
+                              default:
+                                  break;
+                          }
                       }
                   }
-              }
-              monster.WP -= damage;
-              // monster.WP = 0
-              usedMembers[turn_index] = member;
-              setChosenWeapon(null)
-              setChosenSpell(null)
-              showMember({})
-              updateDice(null)
-              if (SquadIsOver(monsters) === true) {
-                  setModalVisible(false)
-                  usedMembers = Array(9).fill({})
-                  turn_index = 0
-                  updateXP((xp) => xp + total_WP * 6)
-                  navigation.setParams({
-                      XP: xp
-                  });
-                  if(battleParams === "normal" || battleParams === "wondering")
-                      send("DONE")
-                  else
-                      send("DONEROOM")
-              } else if (SquadIsOver(monsters) === false) {
-                  if (areEqual(team, usedMembers) === true) {
-                      send("FINISH")
+                  monster.WP -= damage;
+                  if (monster.Name === "X the Unknown" && monster.WP < 1) {
+                      for (let i = 0; i < 9; i++) {
+                          monsters[i].WP = 0;
+                      }
+                  }
+                  // monster.WP = 0
+                  usedMembers[turn_index] = member;
+                  setChosenWeapon(null)
+                  setChosenSpell(null)
+                  showMember({})
+                  updateDice(null)
+                  if (SquadIsOver(monsters) === true) {
+                      setModalVisible(false)
                       usedMembers = Array(9).fill({})
                       turn_index = 0
-                      setModalOption("showMonsterInfo")
+                      updateXP((xp) => xp + total_WP * 6)
+                      navigation.setParams({
+                          XP: xp
+                      });
+                      total_WP = 0
+                      if (battleParams === "normal" || battleParams === "wondering")
+                          send("DONE")
+                      else if (battleParams !== "boss")
+                          send("DONEROOM")
+                  } else {
+                      if (areEqual(team, usedMembers) === true) {
+                          send("FINISH")
+                          usedMembers = Array(9).fill({})
+                          turn_index = 0
+                          setModalOption("showMonsterInfo")
 
-                  } else if (areEqual(team, usedMembers) === false) {
-                      setModalOption("showMonsterInfo")
-                      turn_index += 1
+                      } else {
+                          setModalOption("showMonsterInfo")
+                          turn_index += 1
+                      }
                   }
+              } else {
+                  let HGskill = member.Skill.find((skill) => {return skill.Name === "Hellgate"})
+                  if(dice > HGskill.Value){
+                      member.WP -= 1
+                      showMember({})
+                      showMonster({})
+                      setModalVisible(false)
+                  } else {
+                      send("DONEROOM")
+                  }
+                  setModalVisible(false)
               }
               break;
           case "monstersTurn":
@@ -364,7 +401,10 @@ export default function Battlefield({route, navigation}) {
                       send("DONE")
                       setModalVisible(false)
                   } else if (areEqual(monsters, usedMembers) === true) {
-                      send("FINISH")
+                      if(battleParams !== "boss")
+                          send("FINISH")
+                      else
+                          send("FINISHBOSS")
                       usedMembers = Array(9).fill({})
                       turn_index = 0
                       setModalOption("showHeroInfo")
@@ -373,6 +413,37 @@ export default function Battlefield({route, navigation}) {
                       setModalOption("showHeroInfo")
                       showMonster({})
                       turn_index += 1
+                  }
+              }
+              break;
+          case "hellGatesTurn":
+              if (member.Name === undefined) {
+                  let id = pickRandomHero()
+                  showMember(team[id])
+                  setModalOption("nextState")
+              } else {
+                  if(dice > member.RV) {
+                      let m_damage = 2;
+                      member.WP = member.WP - m_damage;
+                      if (SquadIsOver(team) === true) {
+                          send("DONE")
+                          setModalVisible(false)
+                      } else if (state.context.hellGatesAttacks < 3) {
+                          send("NEXT")
+                          setModalOption("showHeroInfo")
+                      } else {
+                          send("FINISH")
+                          setModalOption("showHeroInfo")
+                      }
+                  } else {
+                      if (state.context.hellGatesAttacks < 3) {
+                          send("NEXT")
+                          showMember({})
+                      } else {
+                          send("FINISH")
+                          showMember({})
+                      }
+                      setModalVisible(false)
                   }
               }
               break;
@@ -509,10 +580,21 @@ export default function Battlefield({route, navigation}) {
       return strongest
   }
 
+  const pickRandomHero = () => {
+    let id = Math.floor(Math.random() * team.length)
+    do{
+        id = Math.floor(Math.random() * team.length)
+    }while (team[id].WP === undefined || team[id].WP < 1)
+
+    return id;
+}
+
 
   const placeMonsters = (item) => {
       for (let i = 8; i > 8 - item.amount; i--) {
           uptMonsters[i] = JSON.parse(JSON.stringify(item.monster))
+          if(battleParams === "boss" && i === (8 - item.amount + 1))
+              uptMonsters[8 - item.amount] = JSON.parse(JSON.stringify(monst("X the Unknown")))
           if(state.value === "monstersAmount")
               uptMonsters[i].id = i
       }
@@ -600,16 +682,30 @@ export default function Battlefield({route, navigation}) {
               </View>
               )
           case "heroesTurn":
-              return (
-                  <View>
-                    <Text style={styles.modalText}>{member.Name} is going to hit {monster.Name}</Text>
-                    <Text style={styles.modalText}>What would you choose?</Text>
-                  </View>
-              )
+              if(monster.Name !== "Hell Gates")
+                  return (
+                      <View>
+                        <Text style={styles.modalText}>{member.Name} is going to hit {monster.Name}</Text>
+                        <Text style={styles.modalText}>What would you choose?</Text>
+                      </View>
+                  )
+              else
+                  return(
+                      <View>
+                        <Text style={styles.modalText}>{member.Name} is going to defeat Hell Gates!</Text>
+                        <Text style={styles.modalText}>Try to end this nightmare!</Text>
+                      </View>
+                  )
           case "monstersTurn":
               return(
                   <View>
                       <Text style={styles.modalText}>{turn_index + 1} {monster.Name} {member.Name !== undefined ? " is going to hit " + member.Name : " is looking for a target!" + "\n" + "Find who will be chosen!"}</Text>
+                  </View>
+              )
+          case "hellGatesTurn":
+              return(
+                  <View>
+                      <Text style={styles.modalText}>Hell Gates {member.Name !== undefined ? " are casting a spell on " + member.Name + "\n Try to resist!": " is looking for a target!" + "\n" + "Find who will be chosen!"}</Text>
                   </View>
               )
           case "getGold":
@@ -918,37 +1014,47 @@ export default function Battlefield({route, navigation}) {
                   </View>
               )
           case "heroesTurn":
-              return(
-                  <View style={{flexDirection:"row", paddingHorizontal:5}}>
-                      <View style={{width:125}}>
-                          <TouchableOpacity
-                              onPress={() => {
-                                  if(member.Spells.length !== 0) {
-                                      setModalOption("UseSpell")
-                                  } else {
-                                      Alert.alert("This hero cannot cast any spell, choose another option!")
-                                  }
-                              }}
-                          >
-                              <View style={[styles.button, {backgroundColor: "tomato", width:100}]}>
-                                  <Text style={styles.textStyle}>Cast Spell!</Text>
-                              </View>
+              if(monster.Name !== "Hell Gates")
+                  return(
+                      <View style={{flexDirection:"row", paddingHorizontal:5}}>
+                          <View style={{width:125}}>
+                              <TouchableOpacity
+                                  onPress={() => {
+                                      if(member.Spells.length !== 0) {
+                                          setModalOption("UseSpell")
+                                      } else {
+                                          Alert.alert("This hero cannot cast any spell, choose another option!")
+                                      }
+                                  }}
+                              >
+                                  <View style={[styles.button, {backgroundColor: "tomato", width:100}]}>
+                                      <Text style={styles.textStyle}>Cast Spell!</Text>
+                                  </View>
 
-                          </TouchableOpacity>
+                              </TouchableOpacity>
+                          </View>
+                          <View style={{width:125}}>
+                              <TouchableOpacity
+                                onPress={() => {
+                                    setModalOption("UseWeapon")
+                                }}
+                              >
+                                  <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
+                                      <Text style={styles.textStyle}>Use Weapons!</Text>
+                                  </View>
+                              </TouchableOpacity>
+                          </View>
                       </View>
-                      <View style={{width:125}}>
-                          <TouchableOpacity
-                            onPress={() => {
-                                setModalOption("UseWeapon")
-                            }}
-                          >
-                              <View style={[styles.button, {backgroundColor: "limegreen", width: 100}]}>
-                                  <Text style={styles.textStyle}>Use Weapons!</Text>
-                              </View>
-                          </TouchableOpacity>
-                      </View>
-                  </View>
-              )
+                  )
+              else
+                  return (
+                      <TouchableOpacity
+                        style={[styles.button, styles.buttonClose]}
+                        onPress={Dice}
+                    >
+                      <Text style={styles.textStyle}>Roll a Dice!</Text>
+                    </TouchableOpacity>
+                  )
           case "assignJewelry":
               return(
                   <View style={{flexDirection:"row", paddingHorizontal:5}}>
@@ -1281,6 +1387,21 @@ export default function Battlefield({route, navigation}) {
     )
   }
 
+  function HellGates(){
+      if(battleParams === "boss") {
+          let hellgate = {Name: "Hell Gates"}
+          return (
+              <View>
+                  <TouchableOpacity onPress={() => SetEnemy(hellgate)}>
+                      <View style={[styles.textContainer, {backgroundColor: "maroon"}]}>
+                          <Text style={[styles.text, {color: "white"}]}>{"Hell Gates"}</Text>
+                      </View>
+                  </TouchableOpacity>
+              </View>
+          )
+      }
+  }
+
   function FindAliveMonsters(){
       let num = 0;
       for(let i = 0; i < 9; i++) {
@@ -1315,16 +1436,18 @@ export default function Battlefield({route, navigation}) {
       case "chooseAction":
         return(
             <View style={{flexDirection:"row", paddingHorizontal:5}}>
-                <View style={{width:125}}>
-                  <TouchableOpacity  onPress={() => {
-                      send(state.context.isNoNegotiationWas ? "NEGOTIATE" : "BRIBE")
-                      ActionStates()
-                  }}>
-                    <View style={[styles.textButtonContainer, {width: 100}]}>
-                      <Text style={styles.textButton}>{state.context.isNoNegotiationWas ? "Negotiate!" : "Bribe!"}</Text>
+                {battleParams !== "boss" ? (
+                    <View style={{width:125}}>
+                      <TouchableOpacity  onPress={() => {
+                          send(state.context.isNoNegotiationWas ? "NEGOTIATE" : "BRIBE")
+                          ActionStates()
+                      }}>
+                        <View style={[styles.textButtonContainer, {width: 100}]}>
+                          <Text style={styles.textButton}>{state.context.isNoNegotiationWas ? "Negotiate!" : "Bribe!"}</Text>
+                        </View>
+                      </TouchableOpacity>
                     </View>
-                  </TouchableOpacity>
-                </View>
+                ) : null}
                 <View style={{width:125}}>
                   <TouchableOpacity  onPress={() => {
                       send("FIGHT")
@@ -1361,6 +1484,17 @@ export default function Battlefield({route, navigation}) {
               <TouchableOpacity onPress={ActionStates}>
                 <View style={styles.textButtonContainer}>
                   <Text style={styles.textButton}>Enemies Turn!</Text>
+                </View>
+              </TouchableOpacity>
+          )
+        case "hellGatesTurn":
+            return(
+              <TouchableOpacity onPress={() => {
+                  setModalOption("nextState")
+                  setModalVisible(true)
+              }}>
+                <View style={styles.textButtonContainer}>
+                  <Text style={styles.textButton}>Hell Gates Turn!</Text>
                 </View>
               </TouchableOpacity>
           )
@@ -1497,6 +1631,7 @@ export default function Battlefield({route, navigation}) {
         <Text style={[styles.textHeader, {flex:1, alignSelf: 'center'}]}>FIGHT!</Text>
         <Text style={[styles.textHeader, {alignSelf: 'flex-end'}]}>XP:{JSON.stringify(xp)}</Text>
       </View>
+      <HellGates/>
       <MonstersField/>
       <ModalScreen/>
       <TeamField/>

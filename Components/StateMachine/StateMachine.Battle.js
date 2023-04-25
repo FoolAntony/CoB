@@ -16,12 +16,21 @@ const setNegotiationIsFailed = assign({
   isNoNegotiationWas: (context,event) => context.isNoNegotiationWas = false
 });
 
+const updateAttacks = assign({
+  hellGatesAttacks: (context,event) => context.hellGatesAttacks + 1
+})
+
+const restoreAttacks = assign({
+  hellGatesAttacks: (context,event) => context.hellGatesAttacks = 1
+})
+
 export const battleMachine = createMachine({
   id: 'battle',
   initial: 'idle',
   context: {
     isNoNegotiationWas: true,
     isNoBriberyWas: true,
+    hellGatesAttacks: 1
   },
   states: {
     idle: {
@@ -97,6 +106,20 @@ export const battleMachine = createMachine({
     monstersTurn: {
       on: {
         FINISH: "heroesReformation",
+        FINISHBOSS: "hellGatesTurn",
+        DONE: "endSession"
+      }
+    },
+    hellGatesTurn: {
+      on: {
+        NEXT: {
+          target:"hellGatesTurn",
+          actions:"updateAttacks"
+        },
+        FINISH: {
+          target:"heroesReformation",
+          actions:"restoreAttacks"
+        },
         DONE: "endSession"
       }
     },
@@ -165,5 +188,5 @@ export const battleMachine = createMachine({
 },
 {
   guards: { isNoNegotiation, isNoBribery },
-  actions: { setNegotiationIsFailed, setBriberyIsFailed },
+  actions: { setNegotiationIsFailed, setBriberyIsFailed, updateAttacks, restoreAttacks },
 });
