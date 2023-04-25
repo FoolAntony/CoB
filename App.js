@@ -41,6 +41,7 @@ let team_test = [{"CB": 5, "MP": [0, 0, 0], "Name": "Weldron", "RV": 2, "Race": 
 // 4. "unknown": X the Unknown statue event; Fight with affected hero
 // WARNING! To have unknown battle event stable, you show insert "Enemy" effect into Effects array
 // 5. "vampire": Cabin event; Fight with a vampire
+// 6. "boss": Final boss of the game
 
 function StackScreens() {
   return (
