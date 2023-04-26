@@ -31,6 +31,7 @@ import {
     treasureMagicItemTable,
     weaponBonus
 } from "../GameController";
+import alert from "react-native-web/dist/exports/Alert";
 
 
 let BoardTemplate = new Array(187).fill({})

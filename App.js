@@ -2,19 +2,11 @@ import { StatusBar } from 'expo-status-bar';
 import React, {useState} from "react";
 import {Alert, Button, StyleSheet, View,} from 'react-native';
 import {NavigationContainer} from "@react-navigation/native";
-
 import Header from "./Components/Header"
-import AboutScreen from "./Components/AboutScreen"
-import HomeScreen from "./Components/HomeScreen"
-import Settings from "./Components/Settings"
-import Rules from "./Components/Rules"
-import Test from "./Components/Test"
 import Board from "./Components/GameplayComponents/Board";
-import Squad from "./Components/GameplayComponents/Squad";
 import Battlefield from "./Components/GameplayComponents/Battlefield";
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import SquadHub from "./Components/GameplayComponents/SquadHub"
-import {Team} from "./Components/SquadController";
 
 
 const Stack = createNativeStackNavigator();
