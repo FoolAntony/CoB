@@ -34,9 +34,9 @@ npm start
 
 The project can work both on real devices and emulators. As real devices the iPhone 11 and the Samsung 20FE were used. To use them, first download the Expo Go application on your device:
 
-![Download from App Store](https://itunes.apple.com/app/apple-store/id982107779)
+![Download from App Store](https://apps.apple.com/app/apple-store/id982107779)
 
-![Download from Google Play](https://play.google.com/store/apps/details?id=host.exp.exponent&referrer=www)
+![Download from Google Play](https://play.google.com/store/apps/details?id=host.exp.exponent&referrer=www&pli=1)
 
 Then, after installation, you have to connect both of your smartphone and computer to the same Wifi network. Otherwise, the project will not run on your device.
 
