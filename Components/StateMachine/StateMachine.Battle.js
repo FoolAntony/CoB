@@ -16,12 +16,21 @@ const setNegotiationIsFailed = assign({
   isNoNegotiationWas: (context,event) => context.isNoNegotiationWas = false
 });
 
+const updateAttacks = assign({
+  hellGatesAttacks: (context,event) => context.hellGatesAttacks + 1
+})
+
+const restoreAttacks = assign({
+  hellGatesAttacks: (context,event) => context.hellGatesAttacks = 1
+})
+
 export const battleMachine = createMachine({
   id: 'battle',
   initial: 'idle',
   context: {
     isNoNegotiationWas: true,
     isNoBriberyWas: true,
+    hellGatesAttacks: 1
   },
   states: {
     idle: {
@@ -90,13 +99,85 @@ export const battleMachine = createMachine({
     heroesTurn: {
       on: {
         FINISH: "monstersTurn",
-        DONE: "endSession"
+        DONE: "getGold",
+        DONEROOM: "endSession"
       }
     },
     monstersTurn: {
       on: {
-        FINISH: "heroesTurn",
+        FINISH: "heroesReformation",
+        FINISHBOSS: "hellGatesTurn",
         DONE: "endSession"
+      }
+    },
+    hellGatesTurn: {
+      on: {
+        NEXT: {
+          target:"hellGatesTurn",
+          actions:"updateAttacks"
+        },
+        FINISH: {
+          target:"heroesReformation",
+          actions:"restoreAttacks"
+        },
+        DONE: "endSession"
+      }
+    },
+    heroesReformation:{
+      on:{
+        NEXT: "monstersReformation"
+      }
+    },
+    monstersReformation:{
+      on:{
+        NEXT: "heroesTurn"
+      }
+    },
+    getGold: {
+      on: {
+        EXIST: "findGold",
+        NEXT: "getJewelry"
+      }
+    },
+    findGold:{
+      on:{
+        NEXT: "getJewelry"
+      }
+    },
+    getJewelry: {
+      on:{
+        EXIST: "findJewelry",
+        NEXT: "getMagicItem"
+      }
+    },
+    findJewelry:{
+      on:{
+        NEXT: "assignJewelry"
+      }
+    },
+    assignJewelry:{
+      on:{
+        REPEAT: "findJewelry",
+        NEXT: "getMagicItem"
+      }
+    },
+    getMagicItem:{
+      on:{
+        EXIST: "findMagicItem",
+        DONE: "endSession",
+        NEXT: "getGold"
+      }
+    },
+    findMagicItem:{
+      on:{
+        NEXT: "assignMagicItem"
+      }
+    },
+    assignMagicItem:{
+      on:{
+        DONE: "endSession",
+        REPEAT: "findMagicItem",
+        NEXT: "getGold"
       }
     },
     endSession: {
@@ -107,5 +188,5 @@ export const battleMachine = createMachine({
 },
 {
   guards: { isNoNegotiation, isNoBribery },
-  actions: { setNegotiationIsFailed, setBriberyIsFailed },
+  actions: { setNegotiationIsFailed, setBriberyIsFailed, updateAttacks, restoreAttacks },
 });

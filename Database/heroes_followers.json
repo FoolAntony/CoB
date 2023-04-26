@@ -9,8 +9,11 @@
     "CB": null,
     "Weapon": [],
     "Spells": [],
-    "WS": ["Bow", 1],
-    "Skill": ["Negotiation", 1]
+    "WS": [{"Type":"Bow","Damage": 1}],
+    "Skill": [{"Name":"Negotiation", "Value": 1}],
+"Treasure": [],
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 25,
@@ -22,8 +25,11 @@
     "CB": null,
     "Weapon": [],
     "Spells": [],
-    "WS": ["Axe", 1],
-    "Skill": ["Detrap", 1]
+    "WS": [{"Type":"Axe","Damage": 1}],
+    "Skill": [{"Name":"Detrap", "Value": 1}],
+"Treasure": [],
+"Inventory": [],
+"Effects": []
   },
   {
     "id": 26,
@@ -35,7 +41,10 @@
     "CB": null,
     "Weapon": [],
     "Spells": [],
-    "WS": ["Sword", 1],
-    "Skill": ["Hellgate", 1]
+    "WS": [{"Type":"Sword","Damage": 1}],
+    "Skill": [{"Name":"Hellgate", "Value": 1}],
+"Treasure": [],
+"Inventory": [],
+"Effects": []
   }
 ]

@@ -31,9 +31,44 @@ board[25][25] = {type: "Start"}
 
 export const monsterDataset = require('../Database/monsters.json')
 
+export const spellDataset = require('../Database/table_of_spells.json')
+
 export const monst = (name => monsterDataset.find(m => {
   return m.Name === name;
 }))
+
+export const getSpell = (name => spellDataset.find(m => {
+    return m.spell_name === name;
+}))
+
+export const foutainTypeList = ["Poison", "Potion", "Alcohol", "Diamond", "Water", "Blood"]
+export const statueTypeList = ["Medusa", "Diamond", "Medallion", "Demon", "Talisman", "Unknown"]
+export const trapdoorTypeList = ["Trap", "Room", "Hatch", "Hellgate"]
+export const furnitureTypeList = ["Coffin", "Closet", "Desk", "Bed", "Harpsichord", "Mirror"]
+export const altarTypeList = ["Alloces", "Vassago", "Anvas", "Malthus", "Lerae", "Asmodus"]
+export const artTypeList = ["Gobelin", "Drawing", "Sculpture", "Cristal", "Icon", "Manuscript"]
+
+export function CheckRoomInside(type, dice) {
+    switch (type) {
+        case "fountain":
+            return foutainTypeList[dice - 1]
+        case "statue":
+            return statueTypeList[dice - 1]
+        case "trapdoor":
+            if(dice < 3)
+                return trapdoorTypeList[0]
+            else if (dice >= 3 && dice < 5)
+                return trapdoorTypeList[1]
+            else
+                return trapdoorTypeList[dice - 3]
+        case "furniture":
+            return furnitureTypeList[dice - 1]
+        case "altar":
+            return altarTypeList[dice - 1]
+        case "art":
+            return artTypeList[dice - 1]
+    }
+}
 
 
 
@@ -88,12 +123,56 @@ export const briberyTable = [
     [6, 6, 6, 5, 5, 4]
 ]
 
+export const treasureGoldTable = [
+    [0,0],
+    [6,1],
+    [6,1],
+    [1,1],
+    [2,10],
+    [3,5],
+    [6,5],
+    [6,1],
+    [6,5],
+    [6,20],
+    [6,20],
+    [6,20]
+]
+
+export const treasureJewelryTable = [
+    [0,0],
+    [0,0],
+    [0,0],
+    [1,1],
+    [2,2],
+    [3,1],
+    [3,2],
+    [1,1],
+    [2,2],
+    [3,2],
+    [4,2]
+]
+
+export const treasureMagicItemTable = [
+    [0,0],
+    [0,0],
+    [1,1],
+    [0,0],
+    [2,1],
+    [1,1],
+    [2,1],
+    [1,1],
+    [2,1],
+    [3,2],
+    [3,2],
+    [4,2]
+]
+
 export const magicItemsTable = [
     ["Sword", "Hammer", "Axe", "Bow", "Dagger", "T-Dagger"],
     [1,1,1,2,2,"Throw twice"],
     ["Poison", "Power", "Power", "Charm Person", "Charm Monster", "Heal"],
     ["Wise", "Yellow Sun", "Blue Sun", "Red Sun", "All Suns", "Evil"],
-    ["Neutralize Poison", "Potion Check", "Oratory", "Neutralize Poison", "Asphyxiation"],
+    ["Neutralize Poison", "Potion Check", "Oratory", "Combat Bonus","Neutralize Poison", "Asphyxiation"],
     ["Resistance +1", "Resistance +2", "Dream", "Neutralize Poison", "Heal", "Resurrection"],
 ]
 
@@ -143,11 +222,6 @@ export function findPrimarySun(dice) {
 
 export function negotiation(dice, hero, monster){
   let spell_buff = 0
-
-  // if (hero.Spells"Oratory") {
-  //   spell_buff = 4
-  // }
-
   if (hero.Skill[0] === "Negotiation") {
     return dice + spell_buff + hero.Skill[1] - monster.NV
   } else {
@@ -178,6 +252,7 @@ export function monsterWanderingType(d1,d2,dice){
   let a = 1;
   let i = d1 - 1;
   let j = halfDiceRoll(d2) - 1;
+  let res = monsterWanderingTable[i][j]
   if ((d1 === 2 && d2 === 5) || (d1 === 2 && d2 === 6) || (d1 === 5 && d2 === 3) || (d1 === 5 && d2 === 4) || (d1 === 5 && d2 === 5) || (d1 === 5 && d2 === 6)) {
     a = halfDiceRoll(dice);
   } else if ((d1 === 3 && d2 === 5) || (d1 === 3 && d2 === 6)) {
@@ -186,10 +261,17 @@ export function monsterWanderingType(d1,d2,dice){
     a = dice;
   }
 
-  return {monster:monsterWanderingTable[i][j], amount: a};
+  return {monster: res, amount: a};
 }
 
-export function battleResultNum(res){
+export function battleResultNum(item, dice, type){
+  let res = 0
+  if (item !== undefined)
+      res = (item.CB !== undefined && item.CB !== null ? item.CB : 0) + dice +
+          + (item.WS !== undefined ? item.WS.filter(skill => skill.Type === type).reduce((a,b) => a + b.Damage, 0) : 0) +
+        + (item.Inventory !== undefined && item.Inventory.includes((object) => (object.effect === "Combat Bonus")) ? 2 : 0);
+  else
+      res = dice
   let index = 0
   switch (res){
     case 1:
@@ -233,6 +315,7 @@ export function battleResultNum(res){
       index = 11;
       break;
   }
+  console.log("GameController result: "+res)
   return index
 }
 
@@ -282,8 +365,8 @@ export function battleResultType(type){
   return index
 }
 
-export function battleResult(res, type){
-  let i = battleResultNum(res);
+export function battleResult(item, dice, type){
+  let i = battleResultNum(item, dice, type);
   let j = battleResultType(type);
   return battleResultTable[i][j];
 }
@@ -365,17 +448,58 @@ export function weaponBonus(d) {
   return bonus;
 }
 
-let jew_table = [1, 5, 10, 15, 20, 25, 35, 50, 75, 100, 150];
+let jewelry_table = [1, 5, 10, 15, 20, 25, 35, 50, 75, 100, 150];
 
-export function jewelryTable(dice) {
-  let i = dice - 2;
-  return jew_table[i];
+export function jewelryTable(res) {
+  let i = res - 2;
+  if (i > 10)
+      i = 10
+  return jewelry_table[i];
 }
 
 export function getMagicItem(d1, d2) {
-  let i = d1 - 1
+  let i = d1 - 1;
+  let item_type = ""
+  switch (d1){
+      case 1:
+          item_type = "Weapon"
+          break;
+      case 2:
+          item_type = "Armor"
+          break;
+      case 3:
+          item_type = "Potion"
+          break;
+      case 4:
+          item_type = "Talisman"
+          break;
+      case 5:
+          item_type = "Medallion"
+          break;
+      case 6:
+          item_type = "Ring"
+
+  }
   let j = d2 - 1
-  return magicItemsTable[i][j]
+  return {type: item_type, effect: magicItemsTable[i][j]}
+}
+
+export function FindHellGateLevel(dice){
+    switch (dice){
+        case 1:
+            return 0;
+        case 2:
+        case 3:
+            return 1;
+        case 4:
+        case 5:
+        case 6:
+            return 2;
+    }
+}
+
+export function FindHellGateDist(dice){
+    return dice + 2;
 }
 
 export function getMonsterHP(item, dice){
@@ -433,4 +557,21 @@ export function getMonsterHP(item, dice){
         break;
     }
   }
+}
+
+export function SquadIsOver(arr) {
+    return arr.every(element => {
+      if (element.WP === undefined) {
+          return true
+      } else return element.WP <= 0;
+    });
+}
+
+
+export function areEqual(array1, array2) {
+    let values = (o) => Object.keys(o).sort().map(k => o[k]).join('|');
+    let mapped1 = array1.map(o => values(o));
+    let mapped2 = array2.map(o => values(o));
+
+    return mapped1.every(v => mapped2.includes(v));
 }
