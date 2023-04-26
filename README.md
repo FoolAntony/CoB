@@ -15,17 +15,12 @@ git clone https://github.com/FoolAntony/CoB.git
 cd .\CoB\
 ```
 
-3. Change the branch to the treasure_test
-```terminal
-git checkout treasure_test
-```
-
-4. Install all dependencies from package.json file:
+3. Install all dependencies from package.json file:
 ```terminal
 npm install package.json
 ```
 
-5. Run the project:
+4. Run the project:
 
 ```terminal
 npm start

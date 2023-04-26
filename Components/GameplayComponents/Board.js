@@ -446,11 +446,6 @@ function isNotWallConnection(index) {
       }
   }
 
-   const Dice = () => {
-     setModalOption("DiceRoll");
-     updateDice(rollDice())
-  }
-
 
   const ChooseNewTile = () => {
     send("NEW")
