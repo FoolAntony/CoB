@@ -4,6 +4,10 @@ This it the diploma thesis project. The idea under this was to create an impleme
 
 ## Installation
 
+Requirements:
+
+    Node.js : v16.14.1
+
 1. Create a new project and run the following code:
 
 ```terminal
