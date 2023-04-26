@@ -19,7 +19,6 @@ const setIsRoomTrue = assign({
 const setIsRoomFalse = assign({
   isRoom: (context,event) => context.isRoom = false
 })
-
 const restoreGoNewTile = assign({
   goNewTile: (context,event) => context.goNewTile = false
 })

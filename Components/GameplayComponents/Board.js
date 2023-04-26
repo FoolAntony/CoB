@@ -446,6 +446,11 @@ function isNotWallConnection(index) {
       }
   }
 
+   const Dice = () => {
+     setModalOption("DiceRoll");
+     updateDice(rollDice())
+  }
+
 
   const ChooseNewTile = () => {
     send("NEW")
@@ -1967,6 +1972,16 @@ function ModalButton() {
         return(
             <View style={{justifyContent:"center"}}>
               <TouchableOpacity onPress={() => MoveSquad(newIndex)}>
+                <View style={styles.textButtonContainer}>
+                  <Text style={styles.textButton}>Move Squad!</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+        )
+      case "moveSquad":
+        return(
+            <View style={{flexDirection:"row"}}>
+              <TouchableOpacity onPress={() => BoardTilesActions(newIndex)}>
                 <View style={styles.textButtonContainer}>
                   <Text style={styles.textButton}>Move Squad!</Text>
                 </View>
